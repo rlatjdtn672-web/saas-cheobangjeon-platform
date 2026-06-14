@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect } from "react";
+import { track } from "@/lib/browser";
 
-// 대시보드 방문 시 page_view 이벤트 1회 기록
-export default function PageViewTracker() {
+// 방문 시 이벤트 1회 기록. type: page_view(대시보드) 또는 saas_view(상세).
+export default function PageViewTracker({
+  type = "page_view",
+  saasId,
+}: {
+  type?: "page_view" | "saas_view";
+  saasId?: string;
+}) {
   useEffect(() => {
-    const key = "saas-cheobang-pv";
-    // 같은 탭 세션에서 중복 집계 방지
+    const key = `scb-${type}-${saasId || "home"}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
-    fetch("/api/track", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type: "page_view" }),
-      keepalive: true,
-    }).catch(() => {});
-  }, []);
+    track(type, saasId);
+  }, [type, saasId]);
   return null;
 }

@@ -21,10 +21,19 @@ export const SEED_SAAS: Saas[] = [
     tagline: "노드 기반 워크플로 자동화. 셀프호스팅 가능한 오픈소스 자동화 툴.",
     description:
       "Zapier/Make의 대안으로 많이 거론되지만, 폐쇄망 대기업 환경에서는 enterprise 라이선스조차 결국 막히는 지점이 있다. 어디까지 되고 어디서 막히는지 실제 도입 관점에서 처방.",
+    body:
+      "n8n은 노드 기반의 워크플로 자동화 툴로, Zapier/Make의 셀프호스팅 가능한 오픈소스 대안이다. 400+ 통합과 코드 노드로 유연하지만, 폐쇄망 대기업에서는 이야기가 다르다. 라이선스(엔터프라이즈) 자체보다 외부 SaaS 노드의 아웃바운드 통신, npm 패키지 설치, OAuth 콜백 같은 부분이 망분리 정책에 막힌다. 결국 \"되긴 되는데 우리 환경에선 반쪽\"이 되는 지점을 미리 짚어주는 처방.",
     category: "워크플로 자동화",
     pricing: "오픈소스 / 셀프호스팅 / Enterprise",
     websiteUrl: "https://n8n.io",
+    githubUrl: "https://github.com/n8n-io/n8n",
+    githubRepo: "n8n-io/n8n",
     logoUrl: "https://n8n.io/favicon.ico",
+    links: [
+      { label: "공식 사이트", url: "https://n8n.io" },
+      { label: "GitHub 레포", url: "https://github.com/n8n-io/n8n" },
+      { label: "문서", url: "https://docs.n8n.io" },
+    ],
     reviewTitle: "n8n enterprise, 폐쇄망 대기업에선 결국 막힌다.",
     reviewUrl:
       "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
@@ -39,10 +48,18 @@ export const SEED_SAAS: Saas[] = [
     tagline: "멀티 에이전트 LLM 금융 트레이딩 프레임워크.",
     description:
       "AI 에이전트들이 애널리스트/리서처/트레이더 역할을 나눠 맡아 의사결정을 시뮬레이션한다. \"AI가 알아서 내 돈으로 주식거래를?\" 실제로 어디까지 믿을 수 있는지, 무엇을 조심해야 하는지 처방.",
+    body:
+      "TradingAgents는 LLM 멀티 에이전트로 구성된 금융 트레이딩 프레임워크다. 펀더멘털·센티먼트·뉴스·기술적 분석가 에이전트가 각자 리서치를 내고, 불/베어 리서처가 토론하며, 트레이더 에이전트가 최종 의사결정을, 리스크 매니저가 검증한다. \"AI가 알아서 내 돈으로 주식거래를?\"이라는 자극적 기대와 달리, 실제로는 백테스트·페이퍼 트레이딩 단계에서 검증 도구로 보는 게 맞다. 실거래 연결 전 반드시 리스크 한도와 휴먼 인 더 루프를 둘 것을 처방한다.",
     category: "AI 에이전트 / 핀테크",
     pricing: "오픈소스",
     websiteUrl: "https://github.com/TauricResearch/TradingAgents",
+    githubUrl: "https://github.com/TauricResearch/TradingAgents",
+    githubRepo: "TauricResearch/TradingAgents",
     logoUrl: "https://github.com/favicon.ico",
+    links: [
+      { label: "GitHub 레포", url: "https://github.com/TauricResearch/TradingAgents" },
+      { label: "논문/문서", url: "https://github.com/TauricResearch/TradingAgents#readme" },
+    ],
     reviewTitle: "AI가 알아서 내돈으로 주식거래를? - TradingAgents",
     reviewUrl:
       "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",

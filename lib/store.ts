@@ -171,16 +171,26 @@ function buildImpact(saasList: Saas[], events: TrackEvent[]): ImpactSummary {
 }
 
 function rowToSaas(r: any): Saas {
+  let links: any[] = [];
+  try {
+    links = Array.isArray(r.links) ? r.links : JSON.parse(r.links ?? "[]");
+  } catch {
+    links = [];
+  }
   return {
     id: r.id,
     slug: r.slug,
     name: r.name,
     tagline: r.tagline ?? "",
     description: r.description ?? "",
+    body: r.body ?? undefined,
     category: r.category ?? "",
     pricing: r.pricing ?? "",
     websiteUrl: r.website_url ?? "",
+    githubUrl: r.github_url ?? undefined,
+    githubRepo: r.github_repo ?? undefined,
     logoUrl: r.logo_url ?? undefined,
+    links,
     reviewTitle: r.review_title ?? "",
     reviewUrl: r.review_url ?? "",
     publishedAt: (r.published_at ?? "").slice(0, 10),
