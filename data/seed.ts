@@ -20,6 +20,29 @@ export const NEWSLETTER = {
 
 export const SEED_SAAS: Saas[] = [
   {
+    id: "prism-insight",
+    slug: "prism-insight",
+    name: "PRISM-INSIGHT",
+    tagline:
+      "8개월째 실제 돈으로 매매하는 13개 멀티에이전트 주식 AI. 코드·매매내역·월 운영비까지 전부 공개한 오픈소스.",
+    description:
+      "카카오 백엔드 개발자가 혼자 만든 멀티에이전트 트레이딩 시스템. 매크로·분석·전략·트레이딩·상담까지 13개+ 에이전트가 팀으로 일하고, MCP로 도구를 묶고, 매매일지를 주기적으로 압축해 기억으로 주입하는 self-improving 루프가 핵심.",
+    category: "AI 에이전트 / 핀테크",
+    pricing: "오픈소스",
+    websiteUrl: "https://analysis.stocksimulation.kr/",
+    githubUrl: "https://github.com/dragon1086/prism-insight",
+    githubRepo: "dragon1086/prism-insight",
+    links: [
+      { label: "메이커 LinkedIn (문상록)", url: "https://www.linkedin.com/in/sangrok-mun/" },
+    ],
+    reviewTitle: "8개월째 돈을 굴리는 13-에이전트 AI — PRISM-INSIGHT 엔지니어링 리뷰",
+    reviewUrl:
+      "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
+    publishedAt: "2026-06-15",
+    issueNo: "3호",
+    featured: true,
+  },
+  {
     id: "n8n",
     slug: "n8n",
     name: "n8n",
@@ -35,11 +58,7 @@ export const SEED_SAAS: Saas[] = [
     docUrl: "https://docs.n8n.io",
     githubRepo: "n8n-io/n8n",
     logoUrl: "https://n8n.io/favicon.ico",
-    links: [
-      { label: "공식 사이트", url: "https://n8n.io" },
-      { label: "GitHub 레포", url: "https://github.com/n8n-io/n8n" },
-      { label: "문서", url: "https://docs.n8n.io" },
-    ],
+    links: [],
     reviewTitle: "n8n enterprise, 폐쇄망 대기업에선 결국 막힌다.",
     reviewUrl:
       "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
@@ -63,10 +82,7 @@ export const SEED_SAAS: Saas[] = [
     docUrl: "https://github.com/TauricResearch/TradingAgents#readme",
     githubRepo: "TauricResearch/TradingAgents",
     logoUrl: "https://github.com/favicon.ico",
-    links: [
-      { label: "GitHub 레포", url: "https://github.com/TauricResearch/TradingAgents" },
-      { label: "논문/문서", url: "https://github.com/TauricResearch/TradingAgents#readme" },
-    ],
+    links: [],
     reviewTitle: "AI가 알아서 내돈으로 주식거래를? - TradingAgents",
     reviewUrl:
       "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",

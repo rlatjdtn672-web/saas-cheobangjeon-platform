@@ -74,11 +74,23 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
         {/* 한 줄 설명 */}
         <p className="mt-4 text-[15px] leading-relaxed text-zinc-200">{saas.tagline}</p>
 
-        {/* 연결 버튼 3개 */}
+        {/* 연결 버튼: 사이트 / GitHub / 문서 / 뉴스레터 / 추가 링크 */}
         <div className="mt-7 space-y-2.5">
+          {saas.websiteUrl && saas.websiteUrl !== saas.githubUrl && (
+            <TrackedLink href={saas.websiteUrl} type="website_click" saasId={saas.id} className={btn}>
+              <span>🌐 사이트 · 라이브</span>
+              <span className="text-accent">↗</span>
+            </TrackedLink>
+          )}
           {saas.githubUrl && (
             <TrackedLink href={saas.githubUrl} type="github_click" saasId={saas.id} className={btn}>
               <span>★ GitHub</span>
+              <span className="text-accent">↗</span>
+            </TrackedLink>
+          )}
+          {saas.docUrl && (
+            <TrackedLink href={saas.docUrl} type="website_click" saasId={saas.id} className={btn}>
+              <span>📄 관련 Doc</span>
               <span className="text-accent">↗</span>
             </TrackedLink>
           )}
@@ -86,12 +98,18 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
             <span>📰 뉴스레터 리뷰</span>
             <span className="text-accent">↗</span>
           </TrackedLink>
-          {saas.docUrl && (
-            <TrackedLink href={saas.docUrl} type="website_click" saasId={saas.id} className={btn}>
-              <span>📄 관련 Doc</span>
+          {(saas.links ?? []).map((l) => (
+            <TrackedLink
+              key={l.url}
+              href={l.url}
+              type={/github\.com/.test(l.url) ? "github_click" : "website_click"}
+              saasId={saas.id}
+              className={btn}
+            >
+              <span>🔗 {l.label}</span>
               <span className="text-accent">↗</span>
             </TrackedLink>
-          )}
+          ))}
         </div>
 
         {/* 리뷰 문의 */}
