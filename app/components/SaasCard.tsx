@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Saas, SaasStats } from "@/lib/types";
 import TrackedLink from "./TrackedLink";
+import CopyLinkButton from "./CopyLinkButton";
 
 function Logo({ saas }: { saas: Saas }) {
   if (saas.logoUrl) {
@@ -67,6 +68,11 @@ export default function SaasCard({ saas, stats }: { saas: Saas; stats?: SaasStat
           리뷰
         </TrackedLink>
       </div>
+      <CopyLinkButton
+        path={`/s/${saas.slug}?ref=linkedin`}
+        label="뉴스레터용 링크 복사"
+        className="mt-2 w-full rounded-lg border border-dashed border-border px-3 py-2 text-center text-[13px] font-medium text-muted transition hover:border-accent/50 hover:text-white"
+      />
     </article>
   );
 }

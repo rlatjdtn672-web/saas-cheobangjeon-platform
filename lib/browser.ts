@@ -1,8 +1,14 @@
 // 클라이언트(브라우저) 전용 Supabase 헬퍼 — 지표 조회 + 이벤트 기록.
 // NEXT_PUBLIC_* 환경변수만 사용 (anon 키). service 키는 절대 여기 들어오지 않음.
 
-export const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-export const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+// anon 키/URL은 공개용(브라우저에 노출 의도, RLS로 보호). env가 빌드에 인라인되지
+// 않아도 클라이언트가 항상 동작하도록 공개 기본값을 둔다.
+const DEFAULT_URL = "https://oaglzmiidhjrumfnltrx.supabase.co";
+const DEFAULT_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hZ2x6bWlpZGhqcnVtZm5sdHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MDYzNTcsImV4cCI6MjA5Njk4MjM1N30.y3K5Ky14shiAwXkGvHkJpq5QHg0G4x7RjSdM8QJE5M4";
+
+export const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_URL;
+export const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_ANON;
 
 const H = { apikey: SB_ANON, Authorization: "Bearer " + SB_ANON };
 

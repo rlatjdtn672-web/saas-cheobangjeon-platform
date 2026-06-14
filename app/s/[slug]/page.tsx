@@ -6,6 +6,7 @@ import { NEWSLETTER } from "@/data/seed";
 import PageViewTracker from "@/app/components/PageViewTracker";
 import TrackedLink from "@/app/components/TrackedLink";
 import LiveStars from "@/app/components/LiveStars";
+import CopyLinkButton from "@/app/components/CopyLinkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,11 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
               사이트 방문 →
             </TrackedLink>
           )}
+          <CopyLinkButton
+            path={`/s/${saas.slug}?ref=linkedin`}
+            label="뉴스레터용 링크 복사"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium text-muted transition hover:border-accent/50 hover:text-white"
+          />
         </div>
 
         {saas.body && (
