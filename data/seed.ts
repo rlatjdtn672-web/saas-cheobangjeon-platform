@@ -27,6 +27,7 @@ export const SEED_SAAS: Saas[] = [
     pricing: "오픈소스 / 셀프호스팅 / Enterprise",
     websiteUrl: "https://n8n.io",
     githubUrl: "https://github.com/n8n-io/n8n",
+    docUrl: "https://docs.n8n.io",
     githubRepo: "n8n-io/n8n",
     logoUrl: "https://n8n.io/favicon.ico",
     links: [
@@ -54,6 +55,7 @@ export const SEED_SAAS: Saas[] = [
     pricing: "오픈소스",
     websiteUrl: "https://github.com/TauricResearch/TradingAgents",
     githubUrl: "https://github.com/TauricResearch/TradingAgents",
+    docUrl: "https://github.com/TauricResearch/TradingAgents#readme",
     githubRepo: "TauricResearch/TradingAgents",
     logoUrl: "https://github.com/favicon.ico",
     links: [

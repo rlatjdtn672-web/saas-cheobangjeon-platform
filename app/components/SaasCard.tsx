@@ -1,6 +1,5 @@
 import Link from "next/link";
-import type { Saas, SaasStats } from "@/lib/types";
-import TrackedLink from "./TrackedLink";
+import type { Saas } from "@/lib/types";
 import CopyLinkButton from "./CopyLinkButton";
 
 function Logo({ saas }: { saas: Saas }) {
@@ -10,69 +9,45 @@ function Logo({ saas }: { saas: Saas }) {
       <img
         src={saas.logoUrl}
         alt={saas.name}
-        className="h-10 w-10 rounded-lg bg-white/5 object-contain p-1"
+        className="h-9 w-9 rounded-lg bg-white/5 object-contain p-1"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 text-lg font-bold text-accent">
+    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 text-base font-bold text-accent">
       {saas.name.slice(0, 1).toUpperCase()}
     </div>
   );
 }
 
-export default function SaasCard({ saas, stats }: { saas: Saas; stats?: SaasStats }) {
+// 공개 홈: 미니 연결 카드 (한 줄 + 상세로 이동 + 링크 복사)
+export default function SaasCard({ saas }: { saas: Saas }) {
   const detail = `/s/${saas.slug}`;
   return (
-    <article className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition hover:border-accent/50">
-      <div className="flex items-start justify-between gap-3">
-        <Link href={detail} className="flex items-center gap-3">
-          <Logo saas={saas} />
-          <div>
-            <h3 className="text-base font-semibold text-white">{saas.name}</h3>
-            <p className="text-xs text-muted">{saas.category}</p>
-          </div>
-        </Link>
-        {saas.issueNo && (
-          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted">
-            {saas.issueNo}
-          </span>
-        )}
-      </div>
-
-      <Link href={detail} className="block">
-        <p className="mt-3 text-sm leading-relaxed text-zinc-300">{saas.tagline}</p>
-        <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted">
-          {saas.description}
-        </p>
+    <article className="flex flex-col rounded-2xl border border-border bg-card p-5 transition hover:border-accent/50">
+      <Link href={detail} className="flex items-center gap-3">
+        <Logo saas={saas} />
+        <div>
+          <h3 className="text-base font-semibold text-white">{saas.name}</h3>
+          {saas.issueNo && <p className="text-xs text-muted">{saas.issueNo}</p>}
+        </div>
       </Link>
-
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted">
-        <span className="rounded-md bg-white/5 px-2 py-1">{saas.pricing}</span>
-        <span className="rounded-md bg-white/5 px-2 py-1">📥 유입 {stats?.views ?? 0}</span>
-      </div>
-
+      <Link href={detail} className="mt-3 block text-sm leading-relaxed text-zinc-300">
+        {saas.tagline}
+      </Link>
       <div className="mt-4 flex gap-2">
         <Link
           href={detail}
           className="flex-1 rounded-lg bg-accent px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-accent/85"
         >
-          상세 보기 →
+          열기 →
         </Link>
-        <TrackedLink
-          href={saas.reviewUrl}
-          type="review_click"
-          saasId={saas.id}
-          className="flex-1 rounded-lg border border-border px-3 py-2 text-center text-sm font-medium text-zinc-200 transition hover:border-accent/50 hover:text-white"
-        >
-          리뷰
-        </TrackedLink>
+        <CopyLinkButton
+          path={`/s/${saas.slug}?ref=linkedin`}
+          label="링크 복사"
+          className="rounded-lg border border-dashed border-border px-3 py-2 text-[13px] font-medium text-muted transition hover:border-accent/50 hover:text-white"
+        />
       </div>
-      <CopyLinkButton
-        path={`/s/${saas.slug}?ref=linkedin`}
-        label="뉴스레터용 링크 복사"
-        className="mt-2 w-full rounded-lg border border-dashed border-border px-3 py-2 text-center text-[13px] font-medium text-muted transition hover:border-accent/50 hover:text-white"
-      />
     </article>
   );
 }

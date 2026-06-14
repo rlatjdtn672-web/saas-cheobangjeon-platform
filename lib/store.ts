@@ -7,6 +7,7 @@ import type {
   TrackEvent,
   SaasStats,
   ImpactSummary,
+  DashboardData,
 } from "@/lib/types";
 
 // ───────────────────────────────────────────────────────────────
@@ -22,6 +23,7 @@ export interface Store {
   recordEvent(type: EventType, saasId?: string | null, referrer?: string | null): Promise<void>;
   statsBySaas(): Promise<Record<string, SaasStats>>;
   impact(): Promise<ImpactSummary>;
+  dashboardData(): Promise<DashboardData>;
 }
 
 // ── 메모리 구현 ───────────────────────────────────────────────
@@ -63,6 +65,40 @@ class MemoryStore implements Store {
 
   async impact(): Promise<ImpactSummary> {
     return buildImpact(SEED_SAAS, memEvents);
+  }
+
+  async dashboardData(): Promise<DashboardData> {
+    const inflowMap: Record<string, number> = {};
+    let visits = 0,
+      linkedin = 0,
+      github = 0;
+    const stat: Record<string, { views: number; githubClicks: number }> = {};
+    for (const s of SEED_SAAS) stat[s.id] = { views: 0, githubClicks: 0 };
+    for (const e of memEvents) {
+      const day = e.createdAt.slice(0, 10);
+      if (e.type === "page_view" || e.type === "saas_view") {
+        visits++;
+        const key = `${day}|${e.referrer || "direct"}`;
+        inflowMap[key] = (inflowMap[key] || 0) + 1;
+        if (e.saasId && stat[e.saasId]) stat[e.saasId].views++;
+      }
+      if (e.type === "github_click") {
+        github++;
+        if (e.saasId && stat[e.saasId]) stat[e.saasId].githubClicks++;
+      }
+    }
+    return {
+      totalReviews: SEED_SAAS.length,
+      totalVisits: visits,
+      totalLinkedinVisits: linkedin,
+      totalGithubClicks: github,
+      inflow: Object.entries(inflowMap).map(([k, v]) => {
+        const [day, source] = k.split("|");
+        return { day, source, visits: v };
+      }),
+      stars: [],
+      saasStats: Object.entries(stat).map(([saasId, v]) => ({ saasId, ...v })),
+    };
   }
 }
 
@@ -137,6 +173,38 @@ class SupabaseStore implements Store {
     }));
     return buildImpact(saasList, events);
   }
+
+  async dashboardData(): Promise<DashboardData> {
+    const [imRes, inflowRes, starsRes, statsRes, saasList] = await Promise.all([
+      this.db.from("impact_summary").select("*").maybeSingle(),
+      this.db.from("daily_inflow").select("*"),
+      this.db.from("github_stats").select("saas_id, stars, captured_at").order("captured_at", { ascending: true }),
+      this.db.from("saas_stats").select("*"),
+      this.listSaas(),
+    ]);
+    const im: any = imRes.data ?? {};
+    return {
+      totalReviews: im.total_reviews ?? saasList.length,
+      totalVisits: im.total_visits ?? 0,
+      totalLinkedinVisits: im.total_linkedin_visits ?? 0,
+      totalGithubClicks: im.total_github_clicks ?? 0,
+      inflow: (inflowRes.data ?? []).map((r: any) => ({
+        day: r.day,
+        source: r.source,
+        visits: r.visits,
+      })),
+      stars: (starsRes.data ?? []).map((r: any) => ({
+        saasId: r.saas_id,
+        stars: r.stars,
+        capturedAt: r.captured_at,
+      })),
+      saasStats: (statsRes.data ?? []).map((r: any) => ({
+        saasId: r.saas_id,
+        views: r.views ?? 0,
+        githubClicks: r.github_clicks ?? 0,
+      })),
+    };
+  }
 }
 
 // ── 공용 집계 함수 ─────────────────────────────────────────────
@@ -188,6 +256,7 @@ function rowToSaas(r: any): Saas {
     pricing: r.pricing ?? "",
     websiteUrl: r.website_url ?? "",
     githubUrl: r.github_url ?? undefined,
+    docUrl: r.doc_url ?? undefined,
     githubRepo: r.github_repo ?? undefined,
     logoUrl: r.logo_url ?? undefined,
     links,

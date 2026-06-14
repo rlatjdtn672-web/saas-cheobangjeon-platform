@@ -13,6 +13,7 @@ export type Saas = {
   pricing: string;         // 예: "무료 / $20~", "오픈소스"
   websiteUrl: string;      // SaaS 공식 사이트
   githubUrl?: string;      // GitHub 레포 URL
+  docUrl?: string;         // 관련 문서/Doc 링크
   githubRepo?: string;     // "owner/repo" (스타 추적용)
   logoUrl?: string;        // 로고 (없으면 이니셜 표시)
   links?: SaasLink[];      // 관련 링크 모음
@@ -52,4 +53,15 @@ export type ImpactSummary = {
   totalReviewClicks: number;
   totalPageViews: number;
   topSaas: { saas: Saas; clicks: number }[];
+};
+
+// 유입 대시보드(비공개)용 전체 데이터
+export type DashboardData = {
+  totalReviews: number;
+  totalVisits: number;        // page_view + saas_view
+  totalLinkedinVisits: number;
+  totalGithubClicks: number;
+  inflow: { day: string; source: string; visits: number }[];
+  stars: { saasId: string; stars: number; capturedAt: string }[];
+  saasStats: { saasId: string; views: number; githubClicks: number }[];
 };
