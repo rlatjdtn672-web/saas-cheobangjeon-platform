@@ -10,6 +10,27 @@
 - **방식:** `docs/index.html` 정적 대시보드 → 브라우저가 Supabase anon 키로 직접 데이터 조회 + 트래픽 이벤트 기록. 빌드/서버 불필요.
 - 새 리뷰 추가: Supabase **Table Editor → `saas` 테이블**에 행 추가하면 즉시 사이트에 반영됨.
 
+### 📌 LinkedIn 댓글에 붙일 링크 (출처 자동 추적)
+
+글을 LinkedIn에 발행한 뒤, **댓글에 아래 형식의 링크**를 달면 거기서 넘어온 유입이 `linkedin` 출처로 집계됩니다:
+
+```
+https://rlatjdtn672-web.github.io/saas-cheobangjeon-platform/s.html?slug=<SLUG>&ref=linkedin
+```
+
+- TradingAgents → `.../s.html?slug=tradingagents&ref=linkedin`
+- n8n → `.../s.html?slug=n8n&ref=linkedin`
+
+`?ref=linkedin`을 붙이는 이유: LinkedIn은 외부 클릭 시 referrer를 가리는 경우가 많아, 파라미터로 출처를 명시하면 정확히 잡힙니다.
+
+### 기능 요약 (대시보드에서 보이는 것)
+
+- **플랫폼 총 유입 / LinkedIn 유입** — 상세·대시보드 방문 수, 출처별 분리
+- **일자별 유입 시계열 차트** — 전체 vs LinkedIn (최근 14일)
+- **유입 → GitHub 전환 퍼널** — 플랫폼 방문 중 몇 %가 GitHub로 넘어갔는지
+- **GitHub 스타 추이** — 매일 자동 스냅샷(Supabase pg_cron), 스타 증감 그래프
+- **SaaS 상세 허브 페이지**(`s.html?slug=`) — 설명·GitHub·관련 링크 모음
+
 ### (선택) 업그레이드 — Vercel 동적 버전
 이 저장소의 Next.js 앱(`app/`)은 서버사이드 트래킹(지표 위변조 방지)이 가능한 동적 버전입니다.
 Vercel 계정 온보딩(vercel.com 최초 로그인)을 완료하면 `.env.local`의 키로 즉시 배포 가능합니다.
