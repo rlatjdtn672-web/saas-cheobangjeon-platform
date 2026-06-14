@@ -11,6 +11,11 @@ export const NEWSLETTER = {
   cadence: "격주 발행",
   newsletterUrl:
     "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
+  // 작성자 본인 LinkedIn 프로필 (DM·연결용)
+  linkedinProfile:
+    "https://www.linkedin.com/in/%EC%84%B1%EC%88%98-%EA%B9%80-9b04303a0/",
+  bio: "SaaS 100개를 직접 결제해보고, 진짜 문제를 짚어 \"이건 이걸로 풀어보세요\"를 처방하는 뉴스레터를 격주로 씁니다.",
+  contactEmail: "rlatjdtn672@gmail.com",
 };
 
 export const SEED_SAAS: Saas[] = [

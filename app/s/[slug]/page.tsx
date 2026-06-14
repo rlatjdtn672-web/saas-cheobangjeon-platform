@@ -52,9 +52,16 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
       <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[300px]" />
 
       <div className="relative mx-auto max-w-md px-5 pb-24 pt-10">
-        <Link href="/" className="text-[13px] text-muted hover:text-white">
-          ← 처방전 목록
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="text-[13px] text-muted hover:text-white">
+            ← 처방전 목록
+          </Link>
+          <CopyLinkButton
+            path={`/s/${saas.slug}?ref=linkedin`}
+            label="복사"
+            className="rounded-md px-2 py-1 text-[11px] text-muted transition hover:text-white"
+          />
+        </div>
 
         <div className="mt-6 flex items-center gap-3.5">
           {logo}
@@ -87,26 +94,23 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
           )}
         </div>
 
-        <div className="mt-5 flex justify-center">
-          <CopyLinkButton path={`/s/${saas.slug}?ref=linkedin`} label="이 페이지 링크 복사" />
-        </div>
-
         {/* 리뷰 문의 */}
         <footer className="mt-12 border-t border-border pt-6 text-center text-xs text-muted">
-          <p>리뷰 문의</p>
-          <p className="mt-1.5">
+          <p>
+            리뷰 문의는{" "}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent hover:underline">
               {CONTACT_EMAIL}
             </a>{" "}
-            또는{" "}
+            메일 또는{" "}
             <a
-              href={NEWSLETTER.newsletterUrl}
+              href={NEWSLETTER.linkedinProfile}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent hover:underline"
             >
               LinkedIn DM
             </a>
+            으로 주세요.
           </p>
         </footer>
       </div>
