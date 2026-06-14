@@ -3,6 +3,20 @@
 뉴스레터 **"실전 SaaS 처방전"** 이 리뷰한 인디 SaaS들을 한눈에 보여주고,
 그 리뷰가 **얼마나 실제 유입(트래픽)을 만들었는지** 측정하는 플랫폼입니다.
 
+## 🟢 현재 라이브 (영구 배포 완료)
+
+- **사이트:** https://rlatjdtn672-web.github.io/saas-cheobangjeon-platform/  (GitHub Pages, 무료)
+- **DB / 지표:** Supabase 프로젝트 `saas-cheobangjeon` (ref `oaglzmiidhjrumfnltrx`, region ap-southeast-1)
+- **방식:** `docs/index.html` 정적 대시보드 → 브라우저가 Supabase anon 키로 직접 데이터 조회 + 트래픽 이벤트 기록. 빌드/서버 불필요.
+- 새 리뷰 추가: Supabase **Table Editor → `saas` 테이블**에 행 추가하면 즉시 사이트에 반영됨.
+
+### (선택) 업그레이드 — Vercel 동적 버전
+이 저장소의 Next.js 앱(`app/`)은 서버사이드 트래킹(지표 위변조 방지)이 가능한 동적 버전입니다.
+Vercel 계정 온보딩(vercel.com 최초 로그인)을 완료하면 `.env.local`의 키로 즉시 배포 가능합니다.
+현재는 신규 계정이 `limited` 상태라 토큰만으로는 프로젝트 생성이 막혀 있습니다.
+
+---
+
 - 🧾 리뷰한 SaaS 카드 (설명 · 가격 · 카테고리 · 공식 사이트 · 원문 리뷰 링크)
 - 📊 임팩트 대시보드 (SaaS로 보낸 유입 클릭 · 리뷰 클릭 · 페이지뷰 · TOP SaaS)
 - 🔗 모든 아웃바운드 링크는 추적 리다이렉트(`/go`)를 거쳐 클릭이 집계됨
