@@ -23,15 +23,17 @@
   .btn.primary{background:#5b8cff;color:#fff}
   .btn.ghost{border-color:#1f2630;color:#c9d1d9}
   h2{font-size:18px;font-weight:600;margin:0}
-  .sec{margin-top:60px}
+  .sec{margin-top:56px}
   .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
   .muted{color:#8b949e;font-size:12px}
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .card{border:1px solid #1f2630;background:#11151c;border-radius:16px;padding:20px}
   .stat .k{font-size:12px;color:#8b949e}
   .stat .v{font-size:30px;font-weight:800;margin-top:8px}
   .stat .h{font-size:11px;color:#8b949e;margin-top:4px}
+  .stat .v small{font-size:14px;color:#22c55e;font-weight:600}
   .scard{display:flex;flex-direction:column;border:1px solid #1f2630;background:#11151c;border-radius:18px;padding:20px;transition:border-color .2s}
   .scard:hover{border-color:rgba(91,140,255,.5)}
   .srow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
@@ -41,12 +43,10 @@
   .scat{font-size:12px;color:#8b949e}
   .pill{border:1px solid #1f2630;border-radius:999px;padding:2px 9px;font-size:11px;color:#8b949e}
   .tag{font-size:14px;color:#cdd6e0;margin-top:12px}
-  .desc{font-size:13px;color:#8b949e;margin-top:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .desc{font-size:13px;color:#8b949e;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .chip{background:rgba(255,255,255,.05);border-radius:7px;padding:4px 9px;font-size:11px;color:#8b949e}
-  .rev{margin-top:16px;border:1px solid rgba(31,38,48,.7);background:rgba(0,0,0,.2);border-radius:12px;padding:12px}
-  .rev .l{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#8b949e}
-  .rev .t{font-size:13px;font-weight:500;color:#e6edf3;margin-top:4px}
+  .chip.star{background:rgba(245,200,66,.12);color:#f5c842}
   .acts{display:flex;gap:8px;margin-top:16px}
   .acts a{flex:1;text-align:center;border-radius:10px;padding:9px;font-size:14px}
   .acts .go{background:#5b8cff;color:#fff;font-weight:600}
@@ -57,13 +57,22 @@
   .bar .track{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:999px;overflow:hidden}
   .bar .fill{height:100%;background:#5b8cff;border-radius:999px}
   .bar .c{width:40px;text-align:right;color:#fff;font-size:14px}
+  .gh-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #1f2630}
+  .gh-row:last-child{border-bottom:0}
+  .gh-row .s{font-size:20px;font-weight:700}
+  .gh-row .d{font-size:12px;color:#22c55e}
+  .funnel{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+  .funnel .step{flex:1;min-width:130px;border:1px solid #1f2630;border-radius:12px;padding:14px;background:#0d1117}
+  .funnel .step .l{font-size:12px;color:#8b949e}
+  .funnel .step .v{font-size:24px;font-weight:800;margin-top:6px}
+  .funnel .conv{align-self:center;color:#22c55e;font-size:13px;font-weight:600}
   .tl a{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid #1f2630}
   .tl a:last-child{border-bottom:0}
   .tl a:hover{background:rgba(255,255,255,.03)}
   .tl .ti{font-size:14px;color:#cdd6e0}
   footer{margin-top:80px;border-top:1px solid #1f2630;padding-top:32px;text-align:center;color:#8b949e;font-size:12px}
   footer a{color:#5b8cff}
-  @media(max-width:760px){h1{font-size:34px}.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
+  @media(max-width:760px){h1{font-size:34px}.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -75,30 +84,59 @@
     <h1>실전 SaaS 처방전</h1>
     <p class="lead">SaaS 100개를 직접 결제해본 사람의 솔직한 처방전. 툴 소개가 아니라, 당신 회사의 진짜 문제를 짚고 "이건 이걸로 풀어보세요"를 처방합니다.</p>
     <div class="btns">
-      <a class="btn primary" target="_blank" rel="noopener" href="https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/">뉴스레터 구독하기</a>
+      <a class="btn primary" target="_blank" rel="noopener" id="nl-btn">뉴스레터 구독하기</a>
       <a class="btn ghost" href="#reviews">리뷰 보기</a>
     </div>
   </header>
 
+  <!-- 임팩트 지표 -->
   <section class="sec">
-    <div class="sec-head"><h2>📊 뉴스레터 임팩트</h2><span class="muted" id="mode">실시간 집계</span></div>
+    <div class="sec-head"><h2>📊 뉴스레터 임팩트</h2><span class="muted">실시간 집계 (Supabase)</span></div>
     <div class="grid4">
       <div class="card stat"><div class="k">리뷰한 SaaS</div><div class="v" id="s-reviews">–</div><div class="h">누적 처방 건수</div></div>
-      <div class="card stat"><div class="k">SaaS로 보낸 유입</div><div class="v" id="s-clicks">–</div><div class="h">뉴스레터가 만든 방문 클릭</div></div>
-      <div class="card stat"><div class="k">리뷰 글 클릭</div><div class="v" id="s-review">–</div><div class="h">원문 리뷰로 이동</div></div>
-      <div class="card stat"><div class="k">대시보드 방문</div><div class="v" id="s-views">–</div><div class="h">플랫폼 페이지뷰</div></div>
-    </div>
-    <div class="card" id="topbox" style="margin-top:16px;display:none">
-      <div class="muted">유입을 가장 많이 만든 SaaS</div>
-      <div id="topbars" style="margin-top:12px"></div>
+      <div class="card stat"><div class="k">플랫폼 총 유입</div><div class="v" id="s-visits">–</div><div class="h">상세/대시보드 방문</div></div>
+      <div class="card stat"><div class="k">LinkedIn 유입</div><div class="v" id="s-linkedin">–</div><div class="h">링크드인에서 넘어온 방문</div></div>
+      <div class="card stat"><div class="k">GitHub 클릭</div><div class="v" id="s-github">–</div><div class="h">플랫폼 → GitHub 전환</div></div>
     </div>
   </section>
 
+  <!-- 유입 시계열 + 전환 퍼널 -->
+  <section class="sec">
+    <div class="grid2">
+      <div class="card">
+        <div class="sec-head" style="margin-bottom:8px"><h2 style="font-size:15px">📈 일자별 플랫폼 유입</h2><span class="muted">최근 14일</span></div>
+        <div id="chart-inflow"><p class="muted">데이터 수집 중…</p></div>
+      </div>
+      <div class="card">
+        <div class="sec-head" style="margin-bottom:14px"><h2 style="font-size:15px">🔻 유입 → GitHub 전환 퍼널</h2></div>
+        <div class="funnel" id="funnel"><p class="muted">집계 중…</p></div>
+        <p class="muted" style="margin-top:12px">링크드인 글 → 플랫폼 상세 → GitHub 으로 이어지는 전환을 추적합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub 스타 추이 -->
+  <section class="sec">
+    <div class="sec-head"><h2>⭐ GitHub 스타 추이</h2><span class="muted">매일 자동 스냅샷</span></div>
+    <div class="grid2">
+      <div class="card"><div id="stars-list"><p class="muted">불러오는 중…</p></div></div>
+      <div class="card"><div class="sec-head" style="margin-bottom:8px"><h2 style="font-size:15px">스타 변화 그래프</h2></div><div id="chart-stars"><p class="muted">스냅샷이 2개 이상 쌓이면 그래프가 그려집니다.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 유입 TOP -->
+  <section class="sec" id="topsec" style="display:none">
+    <div class="sec-head"><h2>🏆 유입을 가장 많이 만든 SaaS</h2></div>
+    <div class="card"><div id="topbars"></div></div>
+  </section>
+
+  <!-- SaaS 카드 -->
   <section class="sec" id="reviews">
     <div class="sec-head"><h2 id="rev-title">🧾 처방한 SaaS</h2></div>
     <div class="grid3" id="cards"><div class="muted">불러오는 중…</div></div>
   </section>
 
+  <!-- 타임라인 -->
   <section class="sec">
     <div class="sec-head"><h2>🗓 발행 타임라인</h2></div>
     <div class="card tl" id="timeline" style="padding:0"></div>
@@ -106,99 +144,118 @@
 
   <footer>
     <p>실전 SaaS 처방전 · by 김성수 · 인디 SaaS부터 시작하는 SaaS 광고 플랫폼</p>
-    <p style="margin-top:8px"><a target="_blank" rel="noopener" href="https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/">LinkedIn 뉴스레터 →</a></p>
+    <p style="margin-top:8px"><a target="_blank" rel="noopener" id="nl-foot">LinkedIn 뉴스레터 →</a></p>
   </footer>
 </div>
 
+<script src="./sb.js"></script>
 <script>
-const SUPABASE_URL = "https://oaglzmiidhjrumfnltrx.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hZ2x6bWlpZGhqcnVtZm5sdHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MDYzNTcsImV4cCI6MjA5Njk4MjM1N30.y3K5Ky14shiAwXkGvHkJpq5QHg0G4x7RjSdM8QJE5M4";
-const H = { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON };
+document.getElementById("nl-btn").href = NEWSLETTER_URL;
+document.getElementById("nl-foot").href = NEWSLETTER_URL;
+const INTRO = { title:"0호. SaaS 처방전을 시작하며", url:NEWSLETTER_URL, publishedAt:"2026-05-22" };
 
-const INTRO = { title:"0호. SaaS 처방전을 시작하며", url:"https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/", publishedAt:"2026-05-22" };
-
-function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-
-async function sbGet(path){
-  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, { headers: H });
-  return r.ok ? r.json() : [];
-}
-
-// 이벤트 기록
-function track(type, saasId){
-  try{
-    fetch(SUPABASE_URL + "/rest/v1/events", {
-      method:"POST",
-      headers:{...H, "Content-Type":"application/json", "Prefer":"return=minimal"},
-      body: JSON.stringify({ type, saas_id: saasId || null }),
-      keepalive: true
-    });
-  }catch(e){}
-}
-
-// 아웃바운드 클릭 → 기록 후 새 탭 이동 (기본 동작 유지, target=_blank)
-function out(type, saasId){ track(type, saasId); return true; }
-
-function cardHtml(s, clicks){
-  const logo = s.logo_url
-    ? `<div class="logo"><img src="${esc(s.logo_url)}" alt=""></div>`
+function cardHtml(s, stat){
+  const logo = s.logo_url ? `<div class="logo"><img src="${esc(s.logo_url)}" alt=""></div>`
     : `<div class="logo">${esc((s.name||"?").slice(0,1).toUpperCase())}</div>`;
+  const detail = `./s.html?slug=${encodeURIComponent(s.slug)}`;
   return `<article class="scard">
     <div class="srow">
-      <div style="display:flex;gap:12px;align-items:center">${logo}
+      <a href="${detail}" style="display:flex;gap:12px;align-items:center">${logo}
         <div><div class="sname">${esc(s.name)}</div><div class="scat">${esc(s.category)}</div></div>
-      </div>
+      </a>
       ${s.issue_no?`<span class="pill">${esc(s.issue_no)}</span>`:""}
     </div>
-    <p class="tag">${esc(s.tagline)}</p>
-    <p class="desc">${esc(s.description)}</p>
-    <div class="chips"><span class="chip">${esc(s.pricing)}</span><span class="chip">📈 유입 ${clicks}</span></div>
-    <div class="rev"><div class="l">처방 리뷰</div><div class="t">${esc(s.review_title)}</div></div>
+    <a href="${detail}"><p class="tag">${esc(s.tagline)}</p><p class="desc">${esc(s.description)}</p></a>
+    <div class="chips"><span class="chip">📥 유입 ${fmtNum(stat.views)}</span><span class="chip">↗ GitHub ${fmtNum(stat.github_clicks)}</span></div>
     <div class="acts">
-      <a class="go" target="_blank" rel="noopener nofollow" href="${esc(s.website_url)}" onclick="out('website_click','${esc(s.id)}')">사이트 방문 →</a>
-      <a class="rd" target="_blank" rel="noopener" href="${esc(s.review_url)}" onclick="out('review_click','${esc(s.id)}')">리뷰 읽기</a>
+      <a class="go" href="${detail}">상세 보기 →</a>
+      <a class="rd" target="_blank" rel="noopener" href="${esc(s.review_url)}" onclick="track('review_click','${esc(s.id)}')">리뷰</a>
     </div>
   </article>`;
 }
 
 async function load(){
-  // page_view (세션당 1회)
   if(!sessionStorage.getItem("scb_pv")){ sessionStorage.setItem("scb_pv","1"); track("page_view"); }
 
-  const [saas, stats, impact] = await Promise.all([
+  const [saas, stats, impact, inflow, ghClicks, ghStats] = await Promise.all([
     sbGet("saas?select=*&order=published_at.desc"),
     sbGet("saas_stats?select=*"),
-    sbGet("impact_summary")
+    sbGet("impact_summary"),
+    sbGet("daily_inflow?select=*"),
+    sbGet("daily_github?select=*"),
+    sbGet("github_stats?select=saas_id,stars,captured_at&order=captured_at.asc")
   ]);
 
-  const statMap = {};
-  (stats||[]).forEach(x=>statMap[x.saas_id]=x);
-  const im = (impact && impact[0]) || {};
+  const statMap={}; (stats||[]).forEach(x=>statMap[x.saas_id]=x);
+  const im=(impact&&impact[0])||{};
 
+  // 지표 카드
   document.getElementById("s-reviews").textContent = im.total_reviews ?? saas.length;
-  document.getElementById("s-clicks").textContent  = im.total_website_clicks ?? 0;
-  document.getElementById("s-review").textContent  = im.total_review_clicks ?? 0;
-  document.getElementById("s-views").textContent   = im.total_page_views ?? 0;
+  document.getElementById("s-visits").textContent  = fmtNum(im.total_visits);
+  document.getElementById("s-linkedin").textContent= fmtNum(im.total_linkedin_visits);
+  document.getElementById("s-github").textContent  = fmtNum(im.total_github_clicks);
   document.getElementById("rev-title").textContent = `🧾 처방한 SaaS (${saas.length})`;
 
-  // 카드
-  document.getElementById("cards").innerHTML = saas.map(s=>cardHtml(s, (statMap[s.id]?.website_clicks)||0)).join("") || '<div class="muted">아직 리뷰가 없습니다.</div>';
+  // ── 유입 시계열 차트 (전체 vs LinkedIn) ──
+  const days = lastNDays(14);
+  const totByDay={}, liByDay={};
+  (inflow||[]).forEach(r=>{ totByDay[r.day]=(totByDay[r.day]||0)+r.visits; if(r.source==='linkedin') liByDay[r.day]=(liByDay[r.day]||0)+r.visits; });
+  lineChart(document.getElementById("chart-inflow"), days, [
+    {label:"전체 유입", color:"#5b8cff", points: days.map(d=>({x:d,y:totByDay[d]||0}))},
+    {label:"LinkedIn 유입", color:"#22c55e", points: days.map(d=>({x:d,y:liByDay[d]||0}))}
+  ]);
 
-  // TOP 막대
-  const ranked = saas.map(s=>({s, c:(statMap[s.id]?.website_clicks)||0})).filter(x=>x.c>0).sort((a,b)=>b.c-a.c).slice(0,5);
-  if(ranked.length){
-    document.getElementById("topbox").style.display="block";
-    const max = ranked[0].c || 1;
-    document.getElementById("topbars").innerHTML = ranked.map((x,i)=>`<div class="bar"><span class="n">${i+1}</span><span class="nm">${esc(x.s.name)}</span><span class="track"><span class="fill" style="width:${Math.min(100,x.c/max*100)}%"></span></span><span class="c">${x.c}</span></div>`).join("");
+  // ── 전환 퍼널 ──
+  const totalGhClicks = (ghClicks||[]).reduce((a,b)=>a+(b.github_clicks||0),0);
+  const v = im.total_visits||0, li = im.total_linkedin_visits||0, g = im.total_github_clicks||0;
+  const conv = v? Math.round(g/v*100):0;
+  document.getElementById("funnel").innerHTML =
+    `<div class="step"><div class="l">플랫폼 유입</div><div class="v">${fmtNum(v)}</div></div>
+     <div class="conv">→</div>
+     <div class="step"><div class="l">그 중 LinkedIn</div><div class="v">${fmtNum(li)}</div></div>
+     <div class="conv">→</div>
+     <div class="step"><div class="l">GitHub 클릭</div><div class="v">${fmtNum(g)}</div></div>
+     <div class="conv">${conv}%</div>`;
+
+  // ── GitHub 스타 추이 ──
+  const seriesBySaas={};
+  (ghStats||[]).forEach(r=>{ (seriesBySaas[r.saas_id]=seriesBySaas[r.saas_id]||[]).push(r); });
+  const nameById={}; saas.forEach(s=>nameById[s.id]=s.name);
+  const starsListEl=document.getElementById("stars-list"); starsListEl.innerHTML="";
+  const colors=["#f5c842","#5b8cff","#22c55e","#ff7b72","#bc8cff"]; let ci=0;
+  const chartSeries=[]; let allDaysSet=new Set();
+  Object.keys(seriesBySaas).forEach(sid=>{
+    const arr=seriesBySaas[sid]; const first=arr[0], last=arr[arr.length-1];
+    const delta=last.stars-first.stars;
+    starsListEl.innerHTML += `<div class="gh-row"><div><div class="muted">${esc(nameById[sid]||sid)}</div><div class="s">${fmtNum(last.stars)} ★</div></div><div class="d">${delta>=0?'+':''}${fmtNum(delta)} (스냅샷 ${arr.length})</div></div>`;
+    const col=colors[ci++%colors.length];
+    const pts=arr.map(r=>({x:r.captured_at.slice(0,10), y:r.stars}));
+    pts.forEach(p=>allDaysSet.add(p.x));
+    chartSeries.push({label:nameById[sid]||sid, color:col, _pts:pts});
+  });
+  const sdays=[...allDaysSet].sort();
+  if(sdays.length>=2){
+    const norm=chartSeries.map(s=>({label:s.label,color:s.color, points: sdays.map(d=>{ const m=s._pts.find(p=>p.x===d); return {x:d,y:m?m.y: (s._pts[0]?s._pts[0].y:0)}; })}));
+    lineChart(document.getElementById("chart-stars"), sdays, norm);
   }
 
-  // 타임라인
-  const tl = [`<a target="_blank" rel="noopener" href="${INTRO.url}"><span class="ti">${esc(INTRO.title)}</span><span class="muted">${INTRO.publishedAt}</span></a>`]
-    .concat(saas.map(s=>`<a target="_blank" rel="noopener" href="${esc(s.review_url)}" onclick="out('review_click','${esc(s.id)}')"><span class="ti">${s.issue_no?esc(s.issue_no)+". ":""}${esc(s.review_title)}</span><span class="muted">${esc(s.published_at)}</span></a>`));
-  document.getElementById("timeline").innerHTML = tl.join("");
-}
+  // ── 카드 ──
+  document.getElementById("cards").innerHTML = saas.map(s=>cardHtml(s, statMap[s.id]||{})).join("") || '<div class="muted">아직 리뷰가 없습니다.</div>';
 
-load().catch(e=>{ document.getElementById("cards").innerHTML='<div class="muted">데이터를 불러오지 못했습니다.</div>'; console.error(e); });
+  // ── TOP 유입 ──
+  const ranked=saas.map(s=>({s,c:(statMap[s.id]?.views)||0})).filter(x=>x.c>0).sort((a,b)=>b.c-a.c).slice(0,5);
+  if(ranked.length){
+    document.getElementById("topsec").style.display="block";
+    const max=ranked[0].c||1;
+    document.getElementById("topbars").innerHTML=ranked.map((x,i)=>`<div class="bar"><span class="n">${i+1}</span><span class="nm">${esc(x.s.name)}</span><span class="track"><span class="fill" style="width:${Math.min(100,x.c/max*100)}%"></span></span><span class="c">${fmtNum(x.c)}</span></div>`).join("");
+  }
+
+  // ── 타임라인 ──
+  const tl=[`<a target="_blank" rel="noopener" href="${INTRO.url}"><span class="ti">${esc(INTRO.title)}</span><span class="muted">${INTRO.publishedAt}</span></a>`]
+    .concat(saas.map(s=>`<a href="./s.html?slug=${encodeURIComponent(s.slug)}"><span class="ti">${s.issue_no?esc(s.issue_no)+". ":""}${esc(s.review_title)}</span><span class="muted">${esc(s.published_at)}</span></a>`));
+  document.getElementById("timeline").innerHTML=tl.join("");
+}
+load().catch(e=>{ console.error(e); document.getElementById("cards").innerHTML='<div class="muted">데이터를 불러오지 못했습니다.</div>'; });
 </script>
 </body>
 </html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SaaS 처방 상세 — 실전 SaaS 처방전</title>
+<meta name="description" content="실전 SaaS 처방전이 분석한 SaaS의 상세 처방·관련 링크·GitHub" />
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0c10;color:#e6edf3;font-family:ui-sans-serif,system-ui,-apple-system,"Pretendard",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:820px;margin:0 auto;padding:40px 20px 96px;position:relative}
+  .glow{position:absolute;inset:0 0 auto 0;height:360px;background:radial-gradient(560px circle at 30% -10%,rgba(91,140,255,.16),transparent 60%);pointer-events:none}
+  .back{font-size:13px;color:#8b949e}
+  .head{display:flex;gap:16px;align-items:center;margin-top:24px}
+  .logo{width:56px;height:56px;border-radius:14px;background:rgba(91,140,255,.15);color:#5b8cff;font-weight:700;font-size:26px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+  .logo img{width:100%;height:100%;object-fit:contain;padding:6px;background:rgba(255,255,255,.05)}
+  h1{font-size:30px;font-weight:800;letter-spacing:-.01em}
+  .cat{color:#8b949e;font-size:13px;margin-top:2px}
+  .tagline{font-size:17px;color:#c9d1d9;margin-top:18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:rgba(255,255,255,.05);border-radius:8px;padding:5px 11px;font-size:12px;color:#aeb7c2}
+  .star{background:rgba(245,200,66,.12);color:#f5c842}
+  .body{margin-top:26px;font-size:15px;color:#cdd6e0;white-space:pre-wrap}
+  .acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .btn{border-radius:11px;padding:12px 18px;font-size:14px;font-weight:600;border:1px solid transparent}
+  .btn.primary{background:#5b8cff;color:#fff}
+  .btn.gh{background:#161b22;border-color:#30363d;color:#fff}
+  .btn.ghost{border-color:#1f2630;color:#cdd6e0}
+  .sec{margin-top:34px}
+  .sec h2{font-size:14px;color:#8b949e;font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
+  .links a{display:flex;align-items:center;justify-content:space-between;border:1px solid #1f2630;background:#11151c;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .links a:hover{border-color:rgba(91,140,255,.5)}
+  .links .arr{color:#5b8cff}
+  .rev{border:1px solid #1f2630;background:#11151c;border-radius:14px;padding:18px}
+  .rev .l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8b949e}
+  .rev .t{font-size:16px;font-weight:600;margin-top:6px}
+  .rev .d{font-size:12px;color:#8b949e;margin-top:4px}
+  footer{margin-top:60px;border-top:1px solid #1f2630;padding-top:24px;text-align:center;color:#8b949e;font-size:12px}
+  footer a{color:#5b8cff}
+  @media(max-width:600px){h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="glow"></div>
+  <a class="back" href="./index.html">← 실전 SaaS 처방전 대시보드</a>
+  <div id="content"><p style="margin-top:40px;color:#8b949e">불러오는 중…</p></div>
+  <footer>
+    <p>실전 SaaS 처방전 · by 김성수</p>
+    <p style="margin-top:8px"><a target="_blank" rel="noopener" id="nl-link">LinkedIn 뉴스레터 구독 →</a></p>
+  </footer>
+</div>
+
+<script src="./sb.js"></script>
+<script>
+document.getElementById("nl-link").href = NEWSLETTER_URL;
+
+function chip(t, cls){ return `<span class="chip ${cls||''}">${esc(t)}</span>`; }
+
+async function load(){
+  const slug = new URLSearchParams(location.search).get("slug");
+  const box = document.getElementById("content");
+  if(!slug){ box.innerHTML='<p style="margin-top:40px;color:#8b949e">slug이 필요합니다.</p>'; return; }
+
+  const [arr, statArr, ghArr] = await Promise.all([
+    sbGet(`saas?slug=eq.${encodeURIComponent(slug)}&select=*`),
+    sbGet(`saas_stats?saas_id=eq.${encodeURIComponent(slug)}`),
+    sbGet(`github_latest?saas_id=eq.${encodeURIComponent(slug)}`)
+  ]);
+  const s = arr[0];
+  if(!s){ box.innerHTML='<p style="margin-top:40px;color:#8b949e">해당 SaaS를 찾을 수 없습니다.</p>'; return; }
+
+  // 이 페이지 방문 = 플랫폼 유입 (출처 기록)
+  track("saas_view", s.id);
+  document.title = `${s.name} — 실전 SaaS 처방전`;
+
+  const gh = ghArr[0];
+  const stat = statArr[0] || {};
+  const logo = s.logo_url ? `<div class="logo"><img src="${esc(s.logo_url)}" alt=""></div>`
+    : `<div class="logo">${esc((s.name||"?").slice(0,1).toUpperCase())}</div>`;
+
+  let links = [];
+  try { links = Array.isArray(s.links) ? s.links : JSON.parse(s.links||"[]"); } catch(e){}
+
+  const ghBtn = s.github_url
+    ? `<a class="btn gh" target="_blank" rel="noopener" href="${esc(s.github_url)}" onclick="track('github_click','${esc(s.id)}')">★ GitHub 레포 ${gh?('· '+fmtNum(gh.stars)+' stars'):''}</a>`
+    : "";
+
+  box.innerHTML = `
+    <div class="head">${logo}<div><h1>${esc(s.name)}</h1><div class="cat">${esc(s.category)}${s.issue_no?' · '+esc(s.issue_no):''}</div></div></div>
+    <p class="tagline">${esc(s.tagline)}</p>
+    <div class="chips">
+      ${chip(s.pricing)}
+      ${gh?chip('★ '+fmtNum(gh.stars)+' stars','star'):''}
+      ${gh?chip('⑂ '+fmtNum(gh.forks)+' forks'):''}
+    </div>
+    <div class="acts">
+      ${ghBtn}
+      ${s.website_url?`<a class="btn primary" target="_blank" rel="noopener nofollow" href="${esc(s.website_url)}" onclick="track('website_click','${esc(s.id)}')">사이트 방문 →</a>`:''}
+    </div>
+    ${s.body?`<div class="body">${esc(s.body)}</div>`:''}
+    ${links.length?`<div class="sec"><h2>관련 링크</h2><div class="links">${links.map(l=>`<a target="_blank" rel="noopener" href="${esc(l.url)}" onclick="track('${/github\.com/.test(l.url)?'github_click':'website_click'}','${esc(s.id)}')"><span>${esc(l.label)}</span><span class="arr">↗</span></a>`).join("")}</div></div>`:''}
+    <div class="sec"><h2>처방 리뷰 원문</h2>
+      <a class="rev" target="_blank" rel="noopener" href="${esc(s.review_url)}" onclick="track('review_click','${esc(s.id)}')" style="display:block">
+        <div class="l">뉴스레터</div><div class="t">${esc(s.review_title)}</div><div class="d">${esc(s.published_at)} 발행 · 클릭하면 LinkedIn 원문으로</div>
+      </a>
+    </div>
+  `;
+}
+load();
+</script>
+</body>
+</html>
