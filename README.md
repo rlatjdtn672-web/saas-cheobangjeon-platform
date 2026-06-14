@@ -10,16 +10,21 @@
 - **방식:** `docs/index.html` 정적 대시보드 → 브라우저가 Supabase anon 키로 직접 데이터 조회 + 트래픽 이벤트 기록. 빌드/서버 불필요.
 - 새 리뷰 추가: Supabase **Table Editor → `saas` 테이블**에 행 추가하면 즉시 사이트에 반영됨.
 
+### 🌐 라이브 (메인 = Vercel, Next.js 풀버전)
+
+- **메인:** https://saas-cheobangjeon-platform.vercel.app
+- (정적 백업: https://rlatjdtn672-web.github.io/saas-cheobangjeon-platform/ )
+
 ### 📌 LinkedIn 댓글에 붙일 링크 (출처 자동 추적)
 
 글을 LinkedIn에 발행한 뒤, **댓글에 아래 형식의 링크**를 달면 거기서 넘어온 유입이 `linkedin` 출처로 집계됩니다:
 
 ```
-https://rlatjdtn672-web.github.io/saas-cheobangjeon-platform/s.html?slug=<SLUG>&ref=linkedin
+https://saas-cheobangjeon-platform.vercel.app/s/<SLUG>?ref=linkedin
 ```
 
-- TradingAgents → `.../s.html?slug=tradingagents&ref=linkedin`
-- n8n → `.../s.html?slug=n8n&ref=linkedin`
+- TradingAgents → `https://saas-cheobangjeon-platform.vercel.app/s/tradingagents?ref=linkedin`
+- n8n → `https://saas-cheobangjeon-platform.vercel.app/s/n8n?ref=linkedin`
 
 `?ref=linkedin`을 붙이는 이유: LinkedIn은 외부 클릭 시 referrer를 가리는 경우가 많아, 파라미터로 출처를 명시하면 정확히 잡힙니다.
 
