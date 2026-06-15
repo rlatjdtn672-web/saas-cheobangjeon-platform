@@ -159,14 +159,6 @@ export default function DashboardView({
           </div>
         </div>
 
-        {/* 최근 활동 */}
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-white">⚡ 최근 활동</h2>
-          <div className="rounded-2xl border border-border bg-card px-5 py-2">
-            <RecentFeed items={data.recent || []} />
-          </div>
-        </div>
-
         {/* SaaS별 유입·이동 */}
         <div>
           <h2 className="mb-4 text-lg font-semibold text-white">🧾 SaaS별 (클릭 시 상세)</h2>
@@ -254,6 +246,16 @@ export default function DashboardView({
             </div>
           </div>
         )}
+
+        {/* 최근 활동 (맨 아래) */}
+        <details className="rounded-2xl border border-border bg-card px-5 py-3">
+          <summary className="cursor-pointer text-lg font-semibold text-white">
+            ⚡ 최근 활동
+          </summary>
+          <div className="mt-2">
+            <RecentFeed items={data.recent || []} />
+          </div>
+        </details>
       </div>
     </div>
   );
