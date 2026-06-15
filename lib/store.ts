@@ -267,6 +267,16 @@ function rowToSaas(r: any): Saas {
   } catch {
     links = [];
   }
+  let buttons: any[] | undefined;
+  try {
+    buttons = r.buttons
+      ? Array.isArray(r.buttons)
+        ? r.buttons
+        : JSON.parse(r.buttons)
+      : undefined;
+  } catch {
+    buttons = undefined;
+  }
   return {
     id: r.id,
     slug: r.slug,
@@ -282,6 +292,7 @@ function rowToSaas(r: any): Saas {
     githubRepo: r.github_repo ?? undefined,
     logoUrl: r.logo_url ?? undefined,
     links,
+    buttons,
     reviewTitle: r.review_title ?? "",
     reviewUrl: r.review_url ?? "",
     publishedAt: (r.published_at ?? "").slice(0, 10),

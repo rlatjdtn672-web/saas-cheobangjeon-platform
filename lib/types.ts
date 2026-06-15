@@ -2,6 +2,14 @@
 
 export type SaasLink = { label: string; url: string };
 
+export type ButtonKind = "website" | "github" | "doc" | "review" | "link";
+export type SaasButton = {
+  kind: ButtonKind;
+  label: string;
+  url: string;
+  enabled: boolean;
+};
+
 export type Saas = {
   id: string;
   slug: string;
@@ -16,7 +24,8 @@ export type Saas = {
   docUrl?: string;         // 관련 문서/Doc 링크
   githubRepo?: string;     // "owner/repo" (스타 추적용)
   logoUrl?: string;        // 로고 (없으면 이니셜 표시)
-  links?: SaasLink[];      // 관련 링크 모음
+  links?: SaasLink[];      // (구) 관련 링크 모음
+  buttons?: SaasButton[];  // 정렬/활성 가능한 연결 버튼 목록
   // 이 SaaS를 다룬 뉴스레터 리뷰
   reviewTitle: string;
   reviewUrl: string;

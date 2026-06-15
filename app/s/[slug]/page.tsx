@@ -10,9 +10,35 @@ import TrackedLink from "@/app/components/TrackedLink";
 import CopyLinkButton from "@/app/components/CopyLinkButton";
 import EditPanel from "@/app/components/EditPanel";
 
+import type { Saas, SaasButton, ButtonKind } from "@/lib/types";
+
 export const dynamic = "force-dynamic";
 
 const CONTACT_EMAIL = "rlatjdtn672@gmail.com";
+
+const KIND_ICON: Record<ButtonKind, string> = {
+  website: "🌐",
+  github: "★",
+  doc: "📄",
+  review: "📰",
+  link: "🔗",
+};
+const trackType = (k: ButtonKind): "github_click" | "review_click" | "website_click" =>
+  k === "github" ? "github_click" : k === "review" ? "review_click" : "website_click";
+
+// buttons 가 없으면 기존 필드로 구성(폴백)
+function deriveButtons(s: Saas): SaasButton[] {
+  if (s.buttons && s.buttons.length) return s.buttons;
+  const out: SaasButton[] = [];
+  if (s.websiteUrl && s.websiteUrl !== s.githubUrl)
+    out.push({ kind: "website", label: "사이트", url: s.websiteUrl, enabled: true });
+  if (s.githubUrl) out.push({ kind: "github", label: "GitHub", url: s.githubUrl, enabled: true });
+  if (s.docUrl) out.push({ kind: "doc", label: "관련 Doc", url: s.docUrl, enabled: true });
+  if (s.reviewUrl)
+    out.push({ kind: "review", label: "뉴스레터 리뷰", url: s.reviewUrl, enabled: true });
+  (s.links ?? []).forEach((l) => out.push({ kind: "link", label: l.label, url: l.url, enabled: true }));
+  return out;
+}
 
 export async function generateMetadata({
   params,
@@ -35,6 +61,9 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
   // 대시보드 로그인(쿠키 비번) 상태에서만 편집 버튼 노출
   const pw = cookies().get(DASH_COOKIE)?.value;
   const canEdit = !!pw && checkPassword(pw);
+
+  const allButtons = deriveButtons(saas);
+  const buttons = allButtons.filter((b) => b.enabled && b.url);
 
   const logo = saas.logoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -69,12 +98,8 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
                 sid={saas.slug}
                 initial={{
                   tagline: saas.tagline ?? "",
-                  websiteUrl: saas.websiteUrl ?? "",
-                  githubUrl: saas.githubUrl ?? "",
                   githubRepo: saas.githubRepo ?? "",
-                  docUrl: saas.docUrl ?? "",
-                  reviewUrl: saas.reviewUrl ?? "",
-                  links: saas.links ?? [],
+                  buttons: allButtons,
                 }}
               />
             )}
@@ -97,40 +122,20 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
         {/* 한 줄 설명 */}
         <p className="mt-4 text-[15px] leading-relaxed text-zinc-200">{saas.tagline}</p>
 
-        {/* 연결 버튼: 사이트 / GitHub / 문서 / 뉴스레터 / 추가 링크 */}
+        {/* 연결 버튼 (순서·활성 편집 가능) */}
         <div className="mt-7 space-y-2.5">
-          {saas.websiteUrl && saas.websiteUrl !== saas.githubUrl && (
-            <TrackedLink href={saas.websiteUrl} type="website_click" saasId={saas.id} target="사이트" className={btn}>
-              <span>🌐 사이트 · 라이브</span>
-              <span className="text-accent">↗</span>
-            </TrackedLink>
-          )}
-          {saas.githubUrl && (
-            <TrackedLink href={saas.githubUrl} type="github_click" saasId={saas.id} target="GitHub" className={btn}>
-              <span>★ GitHub</span>
-              <span className="text-accent">↗</span>
-            </TrackedLink>
-          )}
-          {saas.docUrl && (
-            <TrackedLink href={saas.docUrl} type="website_click" saasId={saas.id} target="Doc" className={btn}>
-              <span>📄 관련 Doc</span>
-              <span className="text-accent">↗</span>
-            </TrackedLink>
-          )}
-          <TrackedLink href={saas.reviewUrl} type="review_click" saasId={saas.id} target="뉴스레터" className={btn}>
-            <span>📰 뉴스레터 리뷰</span>
-            <span className="text-accent">↗</span>
-          </TrackedLink>
-          {(saas.links ?? []).map((l) => (
+          {buttons.map((b, i) => (
             <TrackedLink
-              key={l.url}
-              href={l.url}
-              type={/github\.com/.test(l.url) ? "github_click" : "website_click"}
+              key={`${b.kind}-${i}`}
+              href={b.url}
+              type={trackType(b.kind)}
               saasId={saas.id}
-              target={l.label}
+              target={b.label}
               className={btn}
             >
-              <span>🔗 {l.label}</span>
+              <span>
+                {KIND_ICON[b.kind] || "🔗"} {b.label}
+              </span>
               <span className="text-accent">↗</span>
             </TrackedLink>
           ))}

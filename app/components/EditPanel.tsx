@@ -2,43 +2,52 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SaasLink } from "@/lib/types";
+import type { SaasButton, ButtonKind } from "@/lib/types";
 
 type Initial = {
   tagline: string;
-  websiteUrl: string;
-  githubUrl: string;
   githubRepo: string;
-  docUrl: string;
-  reviewUrl: string;
-  links: SaasLink[];
+  buttons: SaasButton[];
 };
+
+const KINDS: { kind: ButtonKind; label: string }[] = [
+  { kind: "website", label: "🌐 사이트" },
+  { kind: "github", label: "★ GitHub" },
+  { kind: "doc", label: "📄 Doc" },
+  { kind: "review", label: "📰 뉴스레터" },
+  { kind: "link", label: "🔗 링크" },
+];
 
 export default function EditPanel({ sid, initial }: { sid: string; initial: Initial }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
-  const [f, setF] = useState<Initial>({ ...initial, links: [...initial.links] });
+  const [tagline, setTagline] = useState(initial.tagline);
+  const [githubRepo, setGithubRepo] = useState(initial.githubRepo);
+  const [btns, setBtns] = useState<SaasButton[]>(initial.buttons.map((b) => ({ ...b })));
 
-  const set = (k: keyof Initial, v: any) => setF((p) => ({ ...p, [k]: v }));
-  const setLink = (i: number, k: keyof SaasLink, v: string) =>
-    setF((p) => ({ ...p, links: p.links.map((l, j) => (j === i ? { ...l, [k]: v } : l)) }));
-  const addLink = () => setF((p) => ({ ...p, links: [...p.links, { label: "", url: "" }] }));
-  const removeLink = (i: number) =>
-    setF((p) => ({ ...p, links: p.links.filter((_, j) => j !== i) }));
+  const upd = (i: number, k: keyof SaasButton, v: any) =>
+    setBtns((p) => p.map((b, j) => (j === i ? { ...b, [k]: v } : b)));
+  const move = (i: number, dir: -1 | 1) =>
+    setBtns((p) => {
+      const j = i + dir;
+      if (j < 0 || j >= p.length) return p;
+      const n = [...p];
+      [n[i], n[j]] = [n[j], n[i]];
+      return n;
+    });
+  const remove = (i: number) => setBtns((p) => p.filter((_, j) => j !== i));
+  const add = () =>
+    setBtns((p) => [...p, { kind: "link", label: "", url: "", enabled: true }]);
 
   async function save() {
     setSaving(true);
     setErr("");
     const patch = {
-      tagline: f.tagline,
-      website_url: f.websiteUrl,
-      github_url: f.githubUrl,
-      github_repo: f.githubRepo,
-      doc_url: f.docUrl,
-      review_url: f.reviewUrl,
-      links: f.links.filter((l) => l.label.trim() && l.url.trim()),
+      tagline,
+      github_repo: githubRepo,
+      buttons: btns.filter((b) => b.label.trim() && b.url.trim()),
     };
     const r = await fetch("/api/saas/update", {
       method: "POST",
@@ -50,7 +59,7 @@ export default function EditPanel({ sid, initial }: { sid: string; initial: Init
       setOpen(false);
       router.refresh();
     } else {
-      setErr(r.status === 401 ? "권한이 없습니다. 대시보드에서 다시 로그인하세요." : "저장 실패");
+      setErr(r.status === 401 ? "권한 없음. 대시보드에서 다시 로그인하세요." : "저장 실패");
     }
   }
 
@@ -63,7 +72,7 @@ export default function EditPanel({ sid, initial }: { sid: string; initial: Init
       <button
         onClick={() => setOpen(true)}
         className="rounded-md border border-border px-2 py-1 text-[11px] text-muted transition hover:border-accent/50 hover:text-white"
-        title="이 페이지의 링크 편집 (관리자)"
+        title="이 페이지의 버튼 편집 (관리자)"
       >
         ✏️ 편집
       </button>
@@ -74,74 +83,100 @@ export default function EditPanel({ sid, initial }: { sid: string; initial: Init
           onClick={() => setOpen(false)}
         >
           <div
-            className="my-8 w-full max-w-lg rounded-2xl border border-border bg-card p-6"
+            className="my-8 w-full max-w-xl rounded-2xl border border-border bg-card p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">✏️ 링크 편집</h2>
+              <h2 className="text-lg font-semibold text-white">✏️ 버튼·링크 편집</h2>
               <button onClick={() => setOpen(false)} className="text-muted hover:text-white">
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <label className={lbl}>한 줄 설명</label>
-                <input className={inp} value={f.tagline} onChange={(e) => set("tagline", e.target.value)} />
+                <input className={inp} value={tagline} onChange={(e) => setTagline(e.target.value)} />
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={lbl}>사이트 URL</label>
-                  <input className={inp} value={f.websiteUrl} onChange={(e) => set("websiteUrl", e.target.value)} placeholder="https://" />
-                </div>
-                <div>
-                  <label className={lbl}>GitHub URL</label>
-                  <input className={inp} value={f.githubUrl} onChange={(e) => set("githubUrl", e.target.value)} placeholder="https://github.com/owner/repo" />
-                </div>
-                <div>
-                  <label className={lbl}>GitHub repo (owner/repo · 스타추적)</label>
-                  <input className={inp} value={f.githubRepo} onChange={(e) => set("githubRepo", e.target.value)} placeholder="owner/repo" />
-                </div>
-                <div>
-                  <label className={lbl}>Doc URL</label>
-                  <input className={inp} value={f.docUrl} onChange={(e) => set("docUrl", e.target.value)} placeholder="https://" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className={lbl}>뉴스레터 리뷰 URL</label>
-                  <input className={inp} value={f.reviewUrl} onChange={(e) => set("reviewUrl", e.target.value)} placeholder="https://" />
-                </div>
+              <div>
+                <label className={lbl}>GitHub repo (owner/repo · 스타추적)</label>
+                <input
+                  className={inp}
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  placeholder="owner/repo"
+                />
               </div>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className={lbl}>추가 링크</label>
-                  <button onClick={addLink} className="text-xs text-accent hover:underline">
-                    + 링크 추가
+                  <label className={lbl}>연결 버튼 (↑↓ 순서 · 체크 끄면 숨김)</label>
+                  <button onClick={add} className="text-xs text-accent hover:underline">
+                    + 버튼 추가
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {f.links.length === 0 && <p className="text-xs text-muted">추가 링크 없음</p>}
-                  {f.links.map((l, i) => (
-                    <div key={i} className="flex gap-2">
+                  {btns.length === 0 && <p className="text-xs text-muted">버튼 없음</p>}
+                  {btns.map((b, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-lg border border-border p-2 ${b.enabled ? "" : "opacity-50"}`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={b.enabled}
+                          onChange={(e) => upd(i, "enabled", e.target.checked)}
+                          title="표시/숨김"
+                          className="h-4 w-4 accent-[#5b8cff]"
+                        />
+                        <button
+                          onClick={() => move(i, -1)}
+                          disabled={i === 0}
+                          className="rounded px-1.5 text-muted hover:text-white disabled:opacity-30"
+                          title="위로"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => move(i, 1)}
+                          disabled={i === btns.length - 1}
+                          className="rounded px-1.5 text-muted hover:text-white disabled:opacity-30"
+                          title="아래로"
+                        >
+                          ↓
+                        </button>
+                        <select
+                          value={b.kind}
+                          onChange={(e) => upd(i, "kind", e.target.value)}
+                          className="rounded-md border border-border bg-paper px-1.5 py-1.5 text-xs text-white outline-none"
+                        >
+                          {KINDS.map((k) => (
+                            <option key={k.kind} value={k.kind}>
+                              {k.label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className={inp + " flex-1"}
+                          value={b.label}
+                          onChange={(e) => upd(i, "label", e.target.value)}
+                          placeholder="라벨"
+                        />
+                        <button
+                          onClick={() => remove(i)}
+                          className="flex-none rounded-md border border-border px-2 py-1.5 text-sm text-muted hover:border-red-500/50 hover:text-red-400"
+                          title="삭제"
+                        >
+                          ✕
+                        </button>
+                      </div>
                       <input
-                        className={inp + " flex-[2]"}
-                        value={l.label}
-                        onChange={(e) => setLink(i, "label", e.target.value)}
-                        placeholder="라벨 (예: 메이커 LinkedIn)"
-                      />
-                      <input
-                        className={inp + " flex-[3]"}
-                        value={l.url}
-                        onChange={(e) => setLink(i, "url", e.target.value)}
+                        className={inp + " mt-1.5"}
+                        value={b.url}
+                        onChange={(e) => upd(i, "url", e.target.value)}
                         placeholder="https://"
                       />
-                      <button
-                        onClick={() => removeLink(i)}
-                        className="flex-none rounded-lg border border-border px-2.5 text-sm text-muted hover:border-red-500/50 hover:text-red-400"
-                        title="삭제"
-                      >
-                        ✕
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -149,7 +184,7 @@ export default function EditPanel({ sid, initial }: { sid: string; initial: Init
 
               {err && <p className="text-xs text-red-400">{err}</p>}
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-1">
                 <button
                   onClick={() => setOpen(false)}
                   className="rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-white"
