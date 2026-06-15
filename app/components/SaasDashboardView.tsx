@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import LineChart, { Series } from "./LineChart";
-import { lastNDays, fmtNum } from "@/lib/browser";
+import HourHistogram from "./HourHistogram";
+import { lastNDays, fmtNum, fillHours, hourLabel } from "@/lib/browser";
 import type { SaasMetrics } from "@/lib/types";
 
 function Stat({ k, v, h }: { k: string; v: string | number; h?: string }) {
@@ -50,13 +52,25 @@ function Bars({
 
 export default function SaasDashboardView({ m }: { m: SaasMetrics }) {
   const conv = m.views ? Math.round((m.clicks / m.views) * 100) : 0;
+  const [gran, setGran] = useState<"day" | "hour">("day");
 
-  const days = lastNDays(14);
-  const byDay: Record<string, number> = {};
-  m.byDay.forEach((r) => (byDay[r.day] = r.views));
-  const series: Series[] = [
-    { label: "유입(조회)", color: "#5b8cff", points: days.map((x) => ({ x, y: byDay[x] || 0 })) },
-  ];
+  let labels: string[];
+  let series: Series[];
+  if (gran === "day") {
+    const days = lastNDays(14);
+    const byDay: Record<string, number> = {};
+    m.byDay.forEach((r) => (byDay[r.day] = r.views));
+    labels = days;
+    series = [{ label: "유입(조회)", color: "#5b8cff", points: days.map((x) => ({ x, y: byDay[x] || 0 })) }];
+  } else {
+    const byHour: Record<string, number> = {};
+    m.byHour.forEach((r) => (byHour[r.hour] = r.views));
+    const hours = fillHours(m.byHour.map((r) => r.hour));
+    labels = hours.map(hourLabel);
+    series = [
+      { label: "유입(조회)", color: "#5b8cff", points: hours.map((h) => ({ x: hourLabel(h), y: byHour[h] || 0 })) },
+    ];
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-5 pb-24 pt-10">
@@ -86,13 +100,35 @@ export default function SaasDashboardView({ m }: { m: SaasMetrics }) {
           <Stat k="전환율" v={`${conv}%`} h="유입 → 클릭" />
         </div>
 
-        {/* 일자별 유입 */}
+        {/* 유입 추이 (일별/시간별 토글) */}
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-white">📈 일자별 유입</h3>
-            <span className="text-xs text-muted">최근 14일</span>
+            <h3 className="text-[15px] font-semibold text-white">📈 유입 추이</h3>
+            <div className="flex gap-1 rounded-lg border border-border p-0.5 text-xs">
+              {(["day", "hour"] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGran(g)}
+                  className={`rounded-md px-2.5 py-1 transition ${
+                    gran === g ? "bg-accent text-white" : "text-muted hover:text-white"
+                  }`}
+                >
+                  {g === "day" ? "일별 (14일)" : "시간별 (72h)"}
+                </button>
+              ))}
+            </div>
           </div>
-          <LineChart days={days} series={series} />
+          <LineChart
+            days={labels}
+            series={series}
+            tickFmt={gran === "hour" ? (s) => s.split(" ")[1] ?? s : undefined}
+          />
+        </div>
+
+        {/* 시간대별 유입 */}
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="mb-3 text-[15px] font-semibold text-white">🕐 시간대별 유입 (KST)</h3>
+          <HourHistogram data={m.hourOfDay.map((x) => ({ h: x.h, value: x.views }))} />
         </div>
 
         {/* 어디로 이동했나 (링크별 클릭) */}

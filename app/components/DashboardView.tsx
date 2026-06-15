@@ -1,8 +1,13 @@
 "use client";
 
 import LineChart, { Series } from "./LineChart";
+import InflowChart from "./InflowChart";
+import HourHistogram from "./HourHistogram";
+import RecentFeed from "./RecentFeed";
 import { lastNDays, fmtNum } from "@/lib/browser";
 import type { DashboardData } from "@/lib/types";
+
+const SAAS_COLORS = ["#5b8cff", "#22c55e", "#f5c842", "#ff7b72", "#bc8cff"];
 
 type SaasLite = { id: string; name: string; slug: string };
 const STAR_COLORS = ["#f5c842", "#5b8cff", "#22c55e", "#ff7b72", "#bc8cff"];
@@ -37,18 +42,17 @@ export default function DashboardView({
   const ghClicks = data.totalGithubClicks;
   const conv = visits ? Math.round((ghClicks / visits) * 100) : 0;
 
-  // 시계열
+  // 서비스별 일자별 유입 (멀티라인)
   const days = lastNDays(14);
-  const totByDay: Record<string, number> = {};
-  const liByDay: Record<string, number> = {};
-  data.inflow.forEach((r) => {
-    totByDay[r.day] = (totByDay[r.day] || 0) + r.visits;
-    if (r.source === "linkedin") liByDay[r.day] = (liByDay[r.day] || 0) + r.visits;
+  const bySaasDay: Record<string, Record<string, number>> = {};
+  (data.inflowBySaas || []).forEach((r) => {
+    (bySaasDay[r.name] = bySaasDay[r.name] || {})[r.day] = r.views;
   });
-  const inflowSeries: Series[] = [
-    { label: "전체 유입", color: "#5b8cff", points: days.map((x) => ({ x, y: totByDay[x] || 0 })) },
-    { label: "LinkedIn 유입", color: "#22c55e", points: days.map((x) => ({ x, y: liByDay[x] || 0 })) },
-  ];
+  const perServiceSeries: Series[] = Object.keys(bySaasDay).map((name, i) => ({
+    label: name,
+    color: SAAS_COLORS[i % SAAS_COLORS.length],
+    points: days.map((x) => ({ x, y: bySaasDay[name][x] || 0 })),
+  }));
 
   // 스타
   const seriesBySaas: Record<string, { stars: number; capturedAt: string }[]> = {};
@@ -109,14 +113,10 @@ export default function DashboardView({
           <Stat k="GitHub 클릭" v={fmtNum(ghClicks)} h="플랫폼 → GitHub 전환" />
         </div>
 
-        {/* 시계열 + 퍼널 */}
+        {/* 유입 추이(토글) + 퍼널 */}
         <div className="grid gap-5 md:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-white">📈 일자별 플랫폼 유입</h3>
-              <span className="text-xs text-muted">최근 14일</span>
-            </div>
-            <LineChart days={days} series={inflowSeries} />
+            <InflowChart daily={data.inflow} hourly={data.inflowHourly} />
           </div>
           <div className="rounded-2xl border border-border bg-card p-5">
             <h3 className="mb-4 text-[15px] font-semibold text-white">🔻 유입 → GitHub 전환 퍼널</h3>
@@ -137,6 +137,33 @@ export default function DashboardView({
               </div>
               <div className="self-center text-sm font-semibold text-accent2">{conv}%</div>
             </div>
+          </div>
+        </div>
+
+        {/* 서비스별 유입 시계열 + 시간대 분포 */}
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-white">🧬 서비스별 유입 추이</h3>
+              <span className="text-xs text-muted">최근 14일</span>
+            </div>
+            {perServiceSeries.length > 0 ? (
+              <LineChart days={days} series={perServiceSeries} />
+            ) : (
+              <p className="text-sm text-muted">아직 유입이 없습니다.</p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <h3 className="mb-3 text-[15px] font-semibold text-white">🕐 시간대별 유입 (KST)</h3>
+            <HourHistogram data={(data.hourOfDay || []).map((x) => ({ h: x.h, value: x.visits }))} />
+          </div>
+        </div>
+
+        {/* 최근 활동 */}
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-white">⚡ 최근 활동</h2>
+          <div className="rounded-2xl border border-border bg-card px-5 py-2">
+            <RecentFeed items={data.recent || []} />
           </div>
         </div>
 

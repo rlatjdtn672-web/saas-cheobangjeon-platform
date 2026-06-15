@@ -52,6 +52,25 @@ export async function fetchDashboard(pw: string): Promise<DashboardData | null> 
         views: x.views ?? 0,
         clicks: x.clicks ?? 0,
       })),
+      inflowHourly: (d.inflow_hourly || []).map((x: any) => ({
+        hour: x.hour,
+        source: x.source,
+        visits: x.visits,
+      })),
+      inflowBySaas: (d.inflow_by_saas || []).map((x: any) => ({
+        name: x.name,
+        slug: x.slug,
+        day: x.day,
+        views: x.views,
+      })),
+      hourOfDay: (d.hour_of_day || []).map((x: any) => ({ h: x.h, visits: x.visits })),
+      recent: (d.recent || []).map((x: any) => ({
+        type: x.type,
+        target: x.target,
+        name: x.name,
+        source: x.source,
+        at: x.at,
+      })),
     };
   } catch {
     return null;
@@ -83,6 +102,8 @@ export async function fetchSaasMetrics(
       views: d.views ?? 0,
       clicks: d.clicks ?? 0,
       byDay: (d.byDay || []).map((x: any) => ({ day: x.day, views: x.views })),
+      byHour: (d.byHour || []).map((x: any) => ({ hour: x.hour, views: x.views })),
+      hourOfDay: (d.hourOfDay || []).map((x: any) => ({ h: x.h, views: x.views })),
       bySource: (d.bySource || []).map((x: any) => ({ source: x.source, views: x.views })),
       byTarget: (d.byTarget || []).map((x: any) => ({ target: x.target, clicks: x.clicks })),
     };

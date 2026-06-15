@@ -72,3 +72,32 @@ export function lastNDays(n: number): string[] {
 export function fmtNum(n: any): string {
   return (Number(n) || 0).toLocaleString("en-US");
 }
+
+// 'YYYY-MM-DD HH' 키들 사이 빈 시간을 채워 연속 배열 반환 (최대 72)
+export function fillHours(keys: string[]): string[] {
+  const uniq = [...new Set(keys)].sort();
+  if (uniq.length === 0) return [];
+  const parse = (s: string) => {
+    const [d, h] = s.split(" ");
+    const [y, mo, da] = d.split("-").map(Number);
+    return Date.UTC(y, mo - 1, da, Number(h));
+  };
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  const fmt = (t: number) => {
+    const dt = new Date(t);
+    return `${dt.getUTCFullYear()}-${p2(dt.getUTCMonth() + 1)}-${p2(dt.getUTCDate())} ${p2(dt.getUTCHours())}`;
+  };
+  let start = parse(uniq[0]);
+  const end = parse(uniq[uniq.length - 1]);
+  const out: string[] = [];
+  while (start <= end && out.length < 72) {
+    out.push(fmt(start));
+    start += 3600000;
+  }
+  return out;
+}
+
+// 'YYYY-MM-DD HH' → 'MM-DD HH시'
+export function hourLabel(h: string): string {
+  return `${h.slice(5, 10)} ${h.slice(11)}시`;
+}

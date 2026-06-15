@@ -73,6 +73,10 @@ export type DashboardData = {
   stars: { saasId: string; stars: number; capturedAt: string }[];
   saasStats: { saasId: string; views: number; githubClicks: number }[];
   perSaas: PerSaas[];
+  inflowHourly: { hour: string; source: string; visits: number }[];
+  inflowBySaas: { name: string; slug: string; day: string; views: number }[];
+  hourOfDay: { h: number; visits: number }[];
+  recent: { type: string; target: string | null; name: string | null; source: string; at: string }[];
 };
 
 // 단일 SaaS 상세 대시보드 데이터
@@ -82,6 +86,8 @@ export type SaasMetrics = {
   views: number;
   clicks: number;
   byDay: { day: string; views: number }[];
+  byHour: { hour: string; views: number }[];
+  hourOfDay: { h: number; views: number }[];
   bySource: { source: string; views: number }[];
   byTarget: { target: string; clicks: number }[];
 };

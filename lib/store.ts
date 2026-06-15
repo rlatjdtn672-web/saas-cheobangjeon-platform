@@ -105,6 +105,10 @@ class MemoryStore implements Store {
         views: stat[s.id]?.views ?? 0,
         clicks: stat[s.id]?.githubClicks ?? 0,
       })),
+      inflowHourly: [],
+      inflowBySaas: [],
+      hourOfDay: [],
+      recent: [],
     };
   }
 }
@@ -217,6 +221,10 @@ class SupabaseStore implements Store {
         views: 0,
         clicks: 0,
       })),
+      inflowHourly: [],
+      inflowBySaas: [],
+      hourOfDay: [],
+      recent: [],
     };
   }
 }
