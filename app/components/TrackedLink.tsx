@@ -7,6 +7,7 @@ export default function TrackedLink({
   href,
   type,
   saasId,
+  target,
   className,
   children,
   rel = "noopener noreferrer",
@@ -14,6 +15,7 @@ export default function TrackedLink({
   href: string;
   type: "website_click" | "review_click" | "github_click";
   saasId: string;
+  target?: string; // 어떤 링크인지(예: 'GitHub','사이트','Doc','뉴스레터', 링크 라벨)
   className?: string;
   children: React.ReactNode;
   rel?: string;
@@ -24,7 +26,7 @@ export default function TrackedLink({
       target="_blank"
       rel={rel}
       className={className}
-      onClick={() => track(type, saasId)}
+      onClick={() => track(type, saasId, target)}
     >
       {children}
     </a>

@@ -77,24 +77,24 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
         {/* 연결 버튼: 사이트 / GitHub / 문서 / 뉴스레터 / 추가 링크 */}
         <div className="mt-7 space-y-2.5">
           {saas.websiteUrl && saas.websiteUrl !== saas.githubUrl && (
-            <TrackedLink href={saas.websiteUrl} type="website_click" saasId={saas.id} className={btn}>
+            <TrackedLink href={saas.websiteUrl} type="website_click" saasId={saas.id} target="사이트" className={btn}>
               <span>🌐 사이트 · 라이브</span>
               <span className="text-accent">↗</span>
             </TrackedLink>
           )}
           {saas.githubUrl && (
-            <TrackedLink href={saas.githubUrl} type="github_click" saasId={saas.id} className={btn}>
+            <TrackedLink href={saas.githubUrl} type="github_click" saasId={saas.id} target="GitHub" className={btn}>
               <span>★ GitHub</span>
               <span className="text-accent">↗</span>
             </TrackedLink>
           )}
           {saas.docUrl && (
-            <TrackedLink href={saas.docUrl} type="website_click" saasId={saas.id} className={btn}>
+            <TrackedLink href={saas.docUrl} type="website_click" saasId={saas.id} target="Doc" className={btn}>
               <span>📄 관련 Doc</span>
               <span className="text-accent">↗</span>
             </TrackedLink>
           )}
-          <TrackedLink href={saas.reviewUrl} type="review_click" saasId={saas.id} className={btn}>
+          <TrackedLink href={saas.reviewUrl} type="review_click" saasId={saas.id} target="뉴스레터" className={btn}>
             <span>📰 뉴스레터 리뷰</span>
             <span className="text-accent">↗</span>
           </TrackedLink>
@@ -104,6 +104,7 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
               href={l.url}
               type={/github\.com/.test(l.url) ? "github_click" : "website_click"}
               saasId={saas.id}
+              target={l.label}
               className={btn}
             >
               <span>🔗 {l.label}</span>

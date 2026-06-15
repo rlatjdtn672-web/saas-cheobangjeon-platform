@@ -42,13 +42,18 @@ export function visitorSource(): string {
   return "direct";
 }
 
-export function track(type: string, saasId?: string | null) {
+export function track(type: string, saasId?: string | null, target?: string | null) {
   if (!sbReady()) return;
   try {
     fetch(SB_URL + "/rest/v1/events", {
       method: "POST",
       headers: { ...H, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ type, saas_id: saasId ?? null, source: visitorSource() }),
+      body: JSON.stringify({
+        type,
+        saas_id: saasId ?? null,
+        source: visitorSource(),
+        target: target ?? null,
+      }),
       keepalive: true,
     }).catch(() => {});
   } catch {}

@@ -1,5 +1,5 @@
 import "server-only";
-import type { DashboardData } from "./types";
+import type { DashboardData, SaasMetrics } from "./types";
 
 // 대시보드 지표는 비밀번호로 잠긴 DB 함수(dashboard_metrics)로 가져온다.
 // → service 키(잘못 설정될 수 있는 env)에 의존하지 않고, 뷰는 계속 비공개 유지.
@@ -45,6 +45,46 @@ export async function fetchDashboard(pw: string): Promise<DashboardData | null> 
         views: x.views ?? 0,
         githubClicks: x.github_clicks ?? 0,
       })),
+      perSaas: (d.per_saas || []).map((x: any) => ({
+        saasId: x.saas_id,
+        name: x.name,
+        slug: x.slug,
+        views: x.views ?? 0,
+        clicks: x.clicks ?? 0,
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// 단일 SaaS 상세 지표
+export async function fetchSaasMetrics(
+  pw: string,
+  sid: string
+): Promise<SaasMetrics | null> {
+  try {
+    const r = await fetch(`${URL}/rest/v1/rpc/saas_metrics`, {
+      method: "POST",
+      headers: {
+        apikey: ANON,
+        Authorization: "Bearer " + ANON,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ pw, sid }),
+      cache: "no-store",
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d || !d.name) return null;
+    return {
+      name: d.name,
+      slug: d.slug,
+      views: d.views ?? 0,
+      clicks: d.clicks ?? 0,
+      byDay: (d.byDay || []).map((x: any) => ({ day: x.day, views: x.views })),
+      bySource: (d.bySource || []).map((x: any) => ({ source: x.source, views: x.views })),
+      byTarget: (d.byTarget || []).map((x: any) => ({ target: x.target, clicks: x.clicks })),
     };
   } catch {
     return null;

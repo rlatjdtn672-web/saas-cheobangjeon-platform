@@ -140,6 +140,36 @@ export default function DashboardView({
           </div>
         </div>
 
+        {/* SaaS별 유입·이동 */}
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-white">🧾 SaaS별 (클릭 시 상세)</h2>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="flex items-center gap-3 border-b border-border px-5 py-2.5 text-[11px] uppercase tracking-wide text-muted">
+              <span className="flex-1">SaaS</span>
+              <span className="w-16 text-right">유입</span>
+              <span className="w-16 text-right">클릭</span>
+              <span className="w-12 text-right">전환</span>
+              <span className="w-5" />
+            </div>
+            {(data.perSaas || []).map((p) => {
+              const conv = p.views ? Math.round((p.clicks / p.views) * 100) : 0;
+              return (
+                <a
+                  key={p.saasId}
+                  href={`/dashboard/${p.slug}`}
+                  className="flex items-center gap-3 border-b border-border px-5 py-3.5 transition last:border-0 hover:bg-white/[0.03]"
+                >
+                  <span className="flex-1 truncate text-sm text-white">{p.name}</span>
+                  <span className="w-16 text-right text-sm text-zinc-200">{fmtNum(p.views)}</span>
+                  <span className="w-16 text-right text-sm text-zinc-200">{fmtNum(p.clicks)}</span>
+                  <span className="w-12 text-right text-xs text-accent2">{conv}%</span>
+                  <span className="w-5 text-right text-muted">→</span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 스타 */}
         <div>
           <div className="mb-4 flex items-center justify-between">

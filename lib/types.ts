@@ -55,6 +55,14 @@ export type ImpactSummary = {
   topSaas: { saas: Saas; clicks: number }[];
 };
 
+export type PerSaas = {
+  saasId: string;
+  name: string;
+  slug: string;
+  views: number;
+  clicks: number;
+};
+
 // 유입 대시보드(비공개)용 전체 데이터
 export type DashboardData = {
   totalReviews: number;
@@ -64,4 +72,16 @@ export type DashboardData = {
   inflow: { day: string; source: string; visits: number }[];
   stars: { saasId: string; stars: number; capturedAt: string }[];
   saasStats: { saasId: string; views: number; githubClicks: number }[];
+  perSaas: PerSaas[];
+};
+
+// 단일 SaaS 상세 대시보드 데이터
+export type SaasMetrics = {
+  name: string;
+  slug: string;
+  views: number;
+  clicks: number;
+  byDay: { day: string; views: number }[];
+  bySource: { source: string; views: number }[];
+  byTarget: { target: string; clicks: number }[];
 };

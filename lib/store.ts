@@ -98,6 +98,13 @@ class MemoryStore implements Store {
       }),
       stars: [],
       saasStats: Object.entries(stat).map(([saasId, v]) => ({ saasId, ...v })),
+      perSaas: SEED_SAAS.map((s) => ({
+        saasId: s.id,
+        name: s.name,
+        slug: s.slug,
+        views: stat[s.id]?.views ?? 0,
+        clicks: stat[s.id]?.githubClicks ?? 0,
+      })),
     };
   }
 }
@@ -202,6 +209,13 @@ class SupabaseStore implements Store {
         saasId: r.saas_id,
         views: r.views ?? 0,
         githubClicks: r.github_clicks ?? 0,
+      })),
+      perSaas: saasList.map((s) => ({
+        saasId: s.id,
+        name: s.name,
+        slug: s.slug,
+        views: 0,
+        clicks: 0,
       })),
     };
   }
