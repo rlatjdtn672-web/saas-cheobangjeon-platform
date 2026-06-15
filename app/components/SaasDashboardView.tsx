@@ -72,6 +72,23 @@ export default function SaasDashboardView({ m }: { m: SaasMetrics }) {
     ];
   }
 
+  // GitHub 스타 추이 (KST 시각 라벨)
+  const kstHour = (iso: string) => {
+    const d = new Date(new Date(iso).getTime() + 9 * 3600000);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}시`;
+  };
+  const starPts = m.stars || [];
+  const curStars = starPts.length ? starPts[starPts.length - 1].stars : null;
+  const starDelta = starPts.length > 1 ? curStars! - starPts[0].stars : 0;
+  const starSeries: Series[] = [
+    {
+      label: "GitHub ★",
+      color: "#f5c842",
+      points: starPts.map((p) => ({ x: kstHour(p.at), y: p.stars })),
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-3xl px-5 pb-24 pt-10">
       <div className="flex items-center justify-between">
@@ -130,6 +147,30 @@ export default function SaasDashboardView({ m }: { m: SaasMetrics }) {
           <h3 className="mb-3 text-[15px] font-semibold text-white">🕐 시간대별 유입 (KST)</h3>
           <HourHistogram data={m.hourOfDay.map((x) => ({ h: x.h, value: x.views }))} />
         </div>
+
+        {/* GitHub 스타 추이 */}
+        {curStars != null && (
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-white">⭐ GitHub 스타 추이</h3>
+              <span className="text-sm">
+                <span className="font-bold text-white">{fmtNum(curStars)}</span>
+                <span className="text-yellow-300"> ★</span>
+                {starPts.length > 1 && (
+                  <span className="ml-2 text-xs text-accent2">
+                    {starDelta >= 0 ? "+" : ""}
+                    {fmtNum(starDelta)} (기록 {starPts.length})
+                  </span>
+                )}
+              </span>
+            </div>
+            {starPts.length >= 2 ? (
+              <LineChart days={starSeries[0].points.map((p) => p.x)} series={starSeries} baseline="min" />
+            ) : (
+              <p className="text-sm text-muted">스냅샷이 2개 이상 쌓이면 추이 그래프가 그려집니다. (매시간 자동 기록)</p>
+            )}
+          </div>
+        )}
 
         {/* 어디로 이동했나 (링크별 클릭) */}
         <div>

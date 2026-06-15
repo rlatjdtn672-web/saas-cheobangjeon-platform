@@ -90,4 +90,5 @@ export type SaasMetrics = {
   hourOfDay: { h: number; views: number }[];
   bySource: { source: string; views: number }[];
   byTarget: { target: string; clicks: number }[];
+  stars: { stars: number; at: string }[];
 };

@@ -10,21 +10,27 @@ export default function LineChart({
   series,
   height = 200,
   tickFmt,
+  baseline = "zero",
 }: {
   days: string[];
   series: Series[];
   height?: number;
   tickFmt?: (label: string) => string;
+  baseline?: "zero" | "min"; // "min": 데이터 최소~최대로 스케일(큰 값 미세변화 강조)
 }) {
   const W = 680,
     Hh = height,
-    pad = { l: 36, r: 12, t: 14, b: 24 };
+    pad = { l: 44, r: 12, t: 14, b: 24 };
   const iw = W - pad.l - pad.r,
     ih = Hh - pad.t - pad.b;
-  const maxY = Math.max(1, ...series.flatMap((s) => s.points.map((p) => p.y)));
+  const allY = series.flatMap((s) => s.points.map((p) => p.y));
+  const dataMax = Math.max(1, ...allY);
+  const dataMin = Math.min(...(allY.length ? allY : [0]));
+  const lo = baseline === "min" ? Math.max(0, dataMin - Math.ceil((dataMax - dataMin) * 0.15) - 1) : 0;
+  const hi = Math.max(lo + 1, dataMax);
   const n = days.length;
   const xOf = (i: number) => pad.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
-  const yOf = (v: number) => pad.t + ih - (v / maxY) * ih;
+  const yOf = (v: number) => pad.t + ih - ((v - lo) / (hi - lo)) * ih;
   const fmt = tickFmt ?? ((s: string) => (s.length > 5 ? s.slice(5) : s));
 
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -62,7 +68,7 @@ export default function LineChart({
         style={{ display: "block", touchAction: "none" }}
       >
         {[0, 0.5, 1].map((f, i) => {
-          const v = Math.round(maxY * f);
+          const v = Math.round(lo + (hi - lo) * f);
           const y = yOf(v);
           return (
             <g key={i}>

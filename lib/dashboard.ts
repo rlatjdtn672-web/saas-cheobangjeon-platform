@@ -106,6 +106,7 @@ export async function fetchSaasMetrics(
       hourOfDay: (d.hourOfDay || []).map((x: any) => ({ h: x.h, views: x.views })),
       bySource: (d.bySource || []).map((x: any) => ({ source: x.source, views: x.views })),
       byTarget: (d.byTarget || []).map((x: any) => ({ target: x.target, clicks: x.clicks })),
+      stars: (d.stars || []).map((x: any) => ({ stars: x.stars, at: x.at })),
     };
   } catch {
     return null;
