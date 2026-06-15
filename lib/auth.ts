@@ -8,7 +8,6 @@ const PASSWORD_SHA256 =
   "01c2de66b42a22657854ec9a3d4619dc343f6bdd3a4c1e3b7ca18546a928b641";
 
 export const DASH_COOKIE = "scb_dash";
-export const DASH_TOKEN = "scb-ok-2026"; // 쿠키에 저장되는 인증 토큰
 
 export function checkPassword(input: string): boolean {
   if (!input) return false;

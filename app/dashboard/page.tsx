@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getStore } from "@/lib/store";
-import { DASH_COOKIE, DASH_TOKEN } from "@/lib/auth";
+import { checkPassword, DASH_COOKIE } from "@/lib/auth";
+import { fetchDashboard } from "@/lib/dashboard";
 import LoginForm from "@/app/components/LoginForm";
 import DashboardView from "@/app/components/DashboardView";
 
@@ -8,8 +9,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "유입 대시보드 — 실전 SaaS 처방전", robots: { index: false } };
 
 export default async function DashboardPage() {
-  const authed = cookies().get(DASH_COOKIE)?.value === DASH_TOKEN;
-  if (!authed) {
+  const pw = cookies().get(DASH_COOKIE)?.value;
+  if (!pw || !checkPassword(pw)) {
     return (
       <main className="relative min-h-screen">
         <LoginForm />
@@ -17,9 +18,16 @@ export default async function DashboardPage() {
     );
   }
 
-  const store = getStore();
-  const [data, saasList] = await Promise.all([store.dashboardData(), store.listSaas()]);
+  const [data, saasList] = await Promise.all([fetchDashboard(pw), getStore().listSaas()]);
   const saasLite = saasList.map((s) => ({ id: s.id, name: s.name, slug: s.slug }));
+
+  if (!data) {
+    return (
+      <main className="relative min-h-screen">
+        <LoginForm />
+      </main>
+    );
+  }
 
   return (
     <main className="relative">
