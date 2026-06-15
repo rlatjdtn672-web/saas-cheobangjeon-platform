@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { getStore } from "@/lib/store";
 import { NEWSLETTER } from "@/data/seed";
+import { checkPassword, DASH_COOKIE } from "@/lib/auth";
 import PageViewTracker from "@/app/components/PageViewTracker";
 import TrackedLink from "@/app/components/TrackedLink";
 import CopyLinkButton from "@/app/components/CopyLinkButton";
+import EditPanel from "@/app/components/EditPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +31,10 @@ export async function generateMetadata({
 export default async function SaasDetail({ params }: { params: { slug: string } }) {
   const saas = await getStore().getSaas(params.slug);
   if (!saas) notFound();
+
+  // 대시보드 로그인(쿠키 비번) 상태에서만 편집 버튼 노출
+  const pw = cookies().get(DASH_COOKIE)?.value;
+  const canEdit = !!pw && checkPassword(pw);
 
   const logo = saas.logoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -56,11 +63,27 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
           <Link href="/" className="text-[13px] text-muted hover:text-white">
             ← 처방전 목록
           </Link>
-          <CopyLinkButton
-            path={`/s/${saas.slug}?ref=linkedin`}
-            label="복사"
-            className="rounded-md px-2 py-1 text-[11px] text-muted transition hover:text-white"
-          />
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <EditPanel
+                sid={saas.slug}
+                initial={{
+                  tagline: saas.tagline ?? "",
+                  websiteUrl: saas.websiteUrl ?? "",
+                  githubUrl: saas.githubUrl ?? "",
+                  githubRepo: saas.githubRepo ?? "",
+                  docUrl: saas.docUrl ?? "",
+                  reviewUrl: saas.reviewUrl ?? "",
+                  links: saas.links ?? [],
+                }}
+              />
+            )}
+            <CopyLinkButton
+              path={`/s/${saas.slug}?ref=linkedin`}
+              label="복사"
+              className="rounded-md px-2 py-1 text-[11px] text-muted transition hover:text-white"
+            />
+          </div>
         </div>
 
         <div className="mt-6 flex items-center gap-3.5">

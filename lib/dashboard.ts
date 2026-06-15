@@ -77,6 +77,31 @@ export async function fetchDashboard(pw: string): Promise<DashboardData | null> 
   }
 }
 
+// SaaS 필드/링크 저장 (비번 잠금 RPC). 성공 시 갱신된 row 반환.
+export async function updateSaas(
+  pw: string,
+  sid: string,
+  patch: Record<string, any>
+): Promise<any | null> {
+  try {
+    const r = await fetch(`${URL}/rest/v1/rpc/update_saas`, {
+      method: "POST",
+      headers: {
+        apikey: ANON,
+        Authorization: "Bearer " + ANON,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ pw, sid, patch }),
+      cache: "no-store",
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // 단일 SaaS 상세 지표
 export async function fetchSaasMetrics(
   pw: string,
