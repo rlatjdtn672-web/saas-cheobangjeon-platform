@@ -96,12 +96,20 @@ export default function DashboardView({
           </a>
           <h1 className="mt-2 text-2xl font-bold text-white">📊 유입 대시보드</h1>
         </div>
-        <button
-          onClick={logout}
-          className="rounded-lg border border-border px-3 py-2 text-xs text-muted transition hover:text-white"
-        >
-          로그아웃
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/links"
+            className="rounded-lg border border-border px-3 py-2 text-xs text-muted transition hover:text-white"
+          >
+            🔗 단축 링크
+          </a>
+          <button
+            onClick={logout}
+            className="rounded-lg border border-border px-3 py-2 text-xs text-muted transition hover:text-white"
+          >
+            로그아웃
+          </button>
+        </div>
       </div>
 
       <div className="mt-8 space-y-14">
