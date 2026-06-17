@@ -3,6 +3,7 @@
 import { useState } from "react";
 import LineChart, { Series } from "./LineChart";
 import HourHistogram from "./HourHistogram";
+import WorldMap from "./WorldMap";
 import { lastNDays, fmtNum, fillHours, hourLabel } from "@/lib/browser";
 import type { SaasMetrics } from "@/lib/types";
 
@@ -195,6 +196,38 @@ export default function SaasDashboardView({ m }: { m: SaasMetrics }) {
             />
           </div>
         </div>
+
+        {/* 접속 지역 지도 */}
+        <div>
+          <h2 className="mb-1 text-lg font-semibold text-white">🗺 접속 지역 (지도)</h2>
+          <p className="mb-3 text-xs text-muted">IP 기반 추정 · 도시/지역 수준 (번지·동 단위 아님)</p>
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <WorldMap points={m.geo || []} />
+          </div>
+        </div>
+
+        {/* 지역별 */}
+        {m.byRegion && m.byRegion.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-white">📍 지역별</h2>
+            <div className="rounded-2xl border border-border bg-card p-5">
+              {(() => {
+                const maxR = Math.max(1, ...m.byRegion.map((r) => r.hits));
+                return m.byRegion.map((r, i) => (
+                  <div key={i} className="mt-2.5 flex items-center gap-3 first:mt-0">
+                    <span className="w-40 truncate text-sm text-zinc-200" title={r.region}>
+                      {r.region || "미상"}
+                    </span>
+                    <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                      <span className="block h-full rounded-full bg-accent2" style={{ width: `${(r.hits / maxR) * 100}%` }} />
+                    </span>
+                    <span className="w-12 text-right text-sm text-white">{fmtNum(r.hits)}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

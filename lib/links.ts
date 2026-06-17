@@ -21,6 +21,7 @@ export type Geo = {
   country?: string;
   region?: string;
   city?: string;
+  postal?: string;
   lat?: number | null;
   lon?: number | null;
 };
@@ -41,10 +42,35 @@ export async function resolveLink(
     country: geo.country ?? null,
     region: geo.region ?? null,
     city: geo.city ?? null,
+    postal: geo.postal ?? null,
     lat: geo.lat ?? null,
     lon: geo.lon ?? null,
   });
   return typeof t === "string" ? t : null;
+}
+
+// Vercel 엣지 지오IP 헤더 파싱 (서버 라우트에서 공용 사용)
+export function geoFromHeaders(h: Headers): Geo {
+  const dec = (v: string | null) => {
+    if (!v) return undefined;
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  };
+  const ipRaw = h.get("x-forwarded-for") || h.get("x-real-ip") || "";
+  const latS = h.get("x-vercel-ip-latitude");
+  const lonS = h.get("x-vercel-ip-longitude");
+  return {
+    ip: ipRaw.split(",")[0].trim() || undefined,
+    country: dec(h.get("x-vercel-ip-country")),
+    region: dec(h.get("x-vercel-ip-country-region")),
+    city: dec(h.get("x-vercel-ip-city")),
+    postal: dec(h.get("x-vercel-ip-postal-code")),
+    lat: latS ? parseFloat(latS) : null,
+    lon: lonS ? parseFloat(lonS) : null,
+  };
 }
 
 export async function listLinks(pw: string): Promise<any[]> {

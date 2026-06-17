@@ -43,14 +43,14 @@ export function visitorSource(): string {
 }
 
 export function track(type: string, saasId?: string | null, target?: string | null) {
-  if (!sbReady()) return;
   try {
-    fetch(SB_URL + "/rest/v1/events", {
+    // 서버(/api/hit)를 거쳐 기록 → 서버가 Vercel 지오 헤더로 지역 정보까지 부착
+    fetch("/api/hit", {
       method: "POST",
-      headers: { ...H, "Content-Type": "application/json", Prefer: "return=minimal" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type,
-        saas_id: saasId ?? null,
+        saasId: saasId ?? null,
         source: visitorSource(),
         target: target ?? null,
       }),

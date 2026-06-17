@@ -13,7 +13,15 @@ type Detail = {
   bySource: { source: string; hits: number }[];
   geo: { label: string; country: string | null; city: string | null; lat: number; lon: number; hits: number }[];
   byCountry: { country: string; hits: number }[];
-  recent: { source: string; city: string | null; country: string | null; at: string }[];
+  recent: {
+    source: string;
+    city: string | null;
+    region: string | null;
+    country: string | null;
+    postal: string | null;
+    ip: string | null;
+    at: string;
+  }[];
 };
 
 function ago(iso: string) {
@@ -66,7 +74,8 @@ export default function LinkDetailView({ detail, origin }: { detail: Detail; ori
 
         {/* 지도 */}
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-white">🗺 접속 지역 (지도)</h2>
+          <h2 className="mb-1 text-lg font-semibold text-white">🗺 접속 지역 (지도)</h2>
+          <p className="mb-3 text-xs text-muted">IP 기반 추정 · 도시/지역 수준 (번지·동 단위 아님)</p>
           <div className="rounded-2xl border border-border bg-card p-3">
             <WorldMap points={detail.geo || []} />
           </div>
@@ -118,7 +127,7 @@ export default function LinkDetailView({ detail, origin }: { detail: Detail; ori
                 <div key={i} className="flex items-center gap-3 py-2.5 text-sm">
                   <span className="flex-1 truncate text-zinc-200">{r.source}</span>
                   <span className="hidden text-[11px] text-muted sm:block">
-                    {[r.city, r.country].filter(Boolean).join(" · ") || "위치 미상"}
+                    {[r.city, r.region, r.postal, r.country].filter(Boolean).join(" · ") || "위치 미상"}
                   </span>
                   <span className="w-16 text-right text-[11px] text-muted">{ago(r.at)}</span>
                 </div>

@@ -100,4 +100,6 @@ export type SaasMetrics = {
   bySource: { source: string; views: number }[];
   byTarget: { target: string; clicks: number }[];
   stars: { stars: number; at: string }[];
+  geo: { label: string; lat: number; lon: number; hits: number }[];
+  byRegion: { region: string; hits: number }[];
 };

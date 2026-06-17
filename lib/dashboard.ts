@@ -132,6 +132,8 @@ export async function fetchSaasMetrics(
       bySource: (d.bySource || []).map((x: any) => ({ source: x.source, views: x.views })),
       byTarget: (d.byTarget || []).map((x: any) => ({ target: x.target, clicks: x.clicks })),
       stars: (d.stars || []).map((x: any) => ({ stars: x.stars, at: x.at })),
+      geo: (d.geo || []).map((x: any) => ({ label: x.label, lat: x.lat, lon: x.lon, hits: x.hits })),
+      byRegion: (d.byRegion || []).map((x: any) => ({ region: x.region, hits: x.hits })),
     };
   } catch {
     return null;
