@@ -1,6 +1,7 @@
 "use client";
 
 import LineChart, { Series } from "./LineChart";
+import WorldMap from "./WorldMap";
 import { lastNDays, fmtNum } from "@/lib/browser";
 
 type Detail = {
@@ -10,7 +11,9 @@ type Detail = {
   hits: number;
   byDay: { day: string; hits: number }[];
   bySource: { source: string; hits: number }[];
-  recent: { source: string; referrer: string | null; at: string }[];
+  geo: { label: string; country: string | null; city: string | null; lat: number; lon: number; hits: number }[];
+  byCountry: { country: string; hits: number }[];
+  recent: { source: string; city: string | null; country: string | null; at: string }[];
 };
 
 function ago(iso: string) {
@@ -61,6 +64,35 @@ export default function LinkDetailView({ detail, origin }: { detail: Detail; ori
           <LineChart days={days} series={series} />
         </div>
 
+        {/* 지도 */}
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-white">🗺 접속 지역 (지도)</h2>
+          <div className="rounded-2xl border border-border bg-card p-3">
+            <WorldMap points={detail.geo || []} />
+          </div>
+        </div>
+
+        {/* 국가 분포 */}
+        {detail.byCountry && detail.byCountry.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-white">🌍 국가별</h2>
+            <div className="rounded-2xl border border-border bg-card p-5">
+              {(() => {
+                const maxC = Math.max(1, ...detail.byCountry.map((c) => c.hits));
+                return detail.byCountry.map((c) => (
+                  <div key={c.country} className="mt-2.5 flex items-center gap-3 first:mt-0">
+                    <span className="w-16 truncate text-sm text-zinc-200">{c.country}</span>
+                    <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                      <span className="block h-full rounded-full bg-accent2" style={{ width: `${(c.hits / maxC) * 100}%` }} />
+                    </span>
+                    <span className="w-12 text-right text-sm text-white">{fmtNum(c.hits)}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
+
         <div>
           <h2 className="mb-4 text-lg font-semibold text-white">📥 유입 출처</h2>
           <div className="rounded-2xl border border-border bg-card p-5">
@@ -85,7 +117,9 @@ export default function LinkDetailView({ detail, origin }: { detail: Detail; ori
               {detail.recent.map((r, i) => (
                 <div key={i} className="flex items-center gap-3 py-2.5 text-sm">
                   <span className="flex-1 truncate text-zinc-200">{r.source}</span>
-                  <span className="hidden truncate text-[11px] text-muted sm:block sm:max-w-[200px]">{r.referrer || ""}</span>
+                  <span className="hidden text-[11px] text-muted sm:block">
+                    {[r.city, r.country].filter(Boolean).join(" · ") || "위치 미상"}
+                  </span>
                   <span className="w-16 text-right text-[11px] text-muted">{ago(r.at)}</span>
                 </div>
               ))}

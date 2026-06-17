@@ -16,13 +16,34 @@ async function rpc(fn: string, body: any) {
   return r.json().catch(() => null);
 }
 
+export type Geo = {
+  ip?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  lat?: number | null;
+  lon?: number | null;
+};
+
 export async function resolveLink(
   code: string,
   src: string,
   ref: string,
-  ua: string
+  ua: string,
+  geo: Geo = {}
 ): Promise<string | null> {
-  const t = await rpc("resolve_link", { code, src, ref, ua });
+  const t = await rpc("resolve_link", {
+    code,
+    src,
+    ref,
+    ua,
+    ip: geo.ip ?? null,
+    country: geo.country ?? null,
+    region: geo.region ?? null,
+    city: geo.city ?? null,
+    lat: geo.lat ?? null,
+    lon: geo.lon ?? null,
+  });
   return typeof t === "string" ? t : null;
 }
 
