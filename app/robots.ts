@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         // 비공개/기능성 경로는 크롤링 제외
-        disallow: ["/dashboard", "/links", "/api/", "/l/", "/go"],
+        disallow: ["/dashboard", "/links", "/api/", "/l/", "/go", "/blog/manage"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

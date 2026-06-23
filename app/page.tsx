@@ -39,6 +39,12 @@ export default async function HomePage() {
             >
               ✉ 뉴스레터 구독
             </a>
+            <a
+              href="/blog"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] text-zinc-200 transition hover:border-accent/50 hover:text-white"
+            >
+              ✍ 블로그
+            </a>
           </div>
         </header>
 

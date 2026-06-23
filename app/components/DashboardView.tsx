@@ -98,6 +98,12 @@ export default function DashboardView({
         </div>
         <div className="flex items-center gap-2">
           <a
+            href="/blog/manage"
+            className="rounded-lg border border-border px-3 py-2 text-xs text-muted transition hover:text-white"
+          >
+            ✍ 블로그
+          </a>
+          <a
             href="/links"
             className="rounded-lg border border-border px-3 py-2 text-xs text-muted transition hover:text-white"
           >

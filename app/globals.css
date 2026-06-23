@@ -25,3 +25,49 @@ a {
     transparent 60%
   );
 }
+
+/* 블로그 본문(마크다운) 스타일 */
+.post-body h1,
+.post-body h2,
+.post-body h3 {
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1.6em 0 0.6em;
+}
+.post-body h1 { font-size: 1.7em; }
+.post-body h2 { font-size: 1.4em; }
+.post-body h3 { font-size: 1.2em; }
+.post-body p { margin: 0.9em 0; }
+.post-body a { color: #5b8cff; text-decoration: underline; }
+.post-body ul,
+.post-body ol { margin: 0.9em 0; padding-left: 1.4em; }
+.post-body ul { list-style: disc; }
+.post-body ol { list-style: decimal; }
+.post-body li { margin: 0.35em 0; }
+.post-body strong { color: #fff; font-weight: 700; }
+.post-body blockquote {
+  border-left: 3px solid #5b8cff;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #8b949e;
+}
+.post-body code {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+.post-body pre {
+  background: #11151c;
+  border: 1px solid #1f2630;
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 1.1em 0;
+}
+.post-body pre code { background: none; padding: 0; }
+.post-body img { border-radius: 12px; margin: 1.1em 0; max-width: 100%; }
+.post-body hr { border: none; border-top: 1px solid #1f2630; margin: 1.6em 0; }
+.post-body h1:first-child,
+.post-body h2:first-child { margin-top: 0; }

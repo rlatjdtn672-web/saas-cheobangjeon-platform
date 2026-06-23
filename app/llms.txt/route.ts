@@ -1,4 +1,5 @@
 import { getStore } from "@/lib/store";
+import { listPublishedPosts } from "@/lib/blog";
 import { NEWSLETTER } from "@/data/seed";
 import { SITE_URL } from "@/lib/seo";
 
@@ -8,8 +9,12 @@ export const dynamic = "force-dynamic";
 // (제안 표준 — 강제는 아니지만 일부 도구가 참고)
 export async function GET() {
   let saas: { name: string; slug: string; tagline: string }[] = [];
+  let posts: { title: string; slug: string; excerpt: string | null }[] = [];
   try {
     saas = await getStore().listSaas();
+  } catch {}
+  try {
+    posts = (await listPublishedPosts()) as any;
   } catch {}
 
   const lines = [
@@ -20,6 +25,9 @@ export async function GET() {
     "## 리뷰한 SaaS",
     ...saas.map((s) => `- [${s.name}](${SITE_URL}/s/${s.slug}): ${s.tagline}`),
     "",
+    ...(posts.length
+      ? ["## 블로그 글", ...posts.map((p) => `- [${p.title}](${SITE_URL}/blog/${p.slug})${p.excerpt ? ": " + p.excerpt : ""}`), ""]
+      : []),
     "## 더보기",
     `- [홈 · 리뷰 목록](${SITE_URL})`,
     `- [LinkedIn 뉴스레터](${NEWSLETTER.newsletterUrl})`,
