@@ -231,7 +231,7 @@ export default function AboutContent() {
     );
 
   return (
-    <div className="relative mx-auto max-w-2xl px-5 pb-24 pt-12">
+    <div className="relative mx-auto max-w-2xl px-5 pt-10">
       {/* 언어 토글 */}
       <div className="mb-4 flex justify-end">
         <div className="flex gap-1 rounded-lg border border-border p-0.5 text-xs">
