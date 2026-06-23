@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { NEWSLETTER } from "@/data/seed";
 
 const EMAIL = "rlatjdtn672@gmail.com";
@@ -71,12 +72,12 @@ const DATA: Record<
       "JobKorea VibeThon (2026.07, 예정) · 초청 심사위원 — AI/바이브 코딩 해커톤",
       "vLLM Korea Meetup (2026) · 200명(네이버·카카오·현대) — 사내 LLM 서빙 스케일링",
       "Arize AI & Dify Korea Meetup @ AWS Korea (2026) · 폐쇄망 Claude Code·RAG 사례",
-      "LinkedIn 콘텐츠 크리에이터 · 팔로워 4,500+, 최고 게시글 9만 뷰",
+      "LinkedIn 콘텐츠 크리에이터 · 팔로워 5,000+, 최고 게시글 9만 뷰",
     ],
     entre: {
-      title: "공동창업·운영 · 수학/영어 학원",
-      period: "2024 – 2026",
-      body: "삼성 풀타임 근무와 병행해 $4K로 부트스트랩 → 18개월 만에 정원(40명) 달성, ARR $120K·순이익률 85%+. 프리미엄 가격 전략(지역 최고가)으로 95%+ 리텐션 — 0에서 서비스를 만들고·가격 책정하고·키운 경험.",
+      title: "리아영어 · 영어 학원 직접 운영",
+      period: "2024 – 현재",
+      body: "",
     },
     awards: [
       "삼성 DS President's Award (DS Vision Award) — 3회 수상: 개인 2026.04(폐쇄망 Claude Code), 팀 2025.04(GPU LLM 인프라), 팀 2024.08($750M EDA 비용 시스템)",
@@ -137,12 +138,12 @@ const DATA: Record<
       "JobKorea VibeThon (Jul 2026, upcoming) · Invited judge — AI / vibe-coding hackathon",
       "vLLM Korea Meetup (2026) · 200 attendees (Naver, Kakao, Hyundai) — private LLM serving at scale",
       "Arize AI & Dify Korea Meetups @ AWS Korea HQ (2026) · air-gapped Claude Code & RAG case studies",
-      "LinkedIn Content Creator · 4,500+ followers; top post 90K views",
+      "LinkedIn Content Creator · 5,000+ followers; top post 90K views",
     ],
     entre: {
-      title: "Co-founder & Operator · Private Tutoring Academy (Math & English)",
-      period: "2024 – 2026",
-      body: "Bootstrapped with $4K while working full-time at Samsung — scaled from zero to full capacity (40 students) in 18 months, reaching $120K ARR at >85% net margin. Premium-pricing strategy (highest in the local market) with 95%+ retention — hands-on experience building, pricing, and growing a service from zero.",
+      title: "Lia English · Founder & Operator (English Academy)",
+      period: "2024 – Present",
+      body: "",
     },
     awards: [
       "Samsung DS President's Award (DS Vision Award) — 3-time recipient: Individual, Apr 2026 (air-gapped Claude Code); Team, Apr 2025 (GPU LLM infra); Team, Aug 2024 ($750M EDA cost system)",
@@ -159,6 +160,67 @@ const DATA: Record<
 export default function AboutContent() {
   const [lang, setLang] = useState<Lang>("ko");
   const d = DATA[lang];
+
+  const aLink = "text-accent hover:underline";
+  const introNode =
+    lang === "ko" ? (
+      <>
+        폐쇄망(air-gapped) 환경에서 사내 LLM 플랫폼·GPU 인프라·RAG를 설계·운영하는 AI 인프라
+        엔지니어입니다. LinkedIn에 AI·인프라 이야기를 쓰며{" "}
+        <a href={NEWSLETTER.linkedinProfile} target="_blank" rel="noopener noreferrer" className={aLink}>
+          팔로워 5,000+
+        </a>
+        를 모았고, 이곳{" "}
+        <Link href="/blog" className={aLink}>
+          블로그
+        </Link>
+        에도 글을 씁니다. 영어 학원{" "}
+        <Link href="/english" className={aLink}>
+          리아영어
+        </Link>
+        를 직접 운영하고, SaaS 100개를 결제해보며 솔직하게 리뷰합니다.
+      </>
+    ) : (
+      <>
+        I&apos;m an AI infrastructure engineer building in-house LLM platforms, GPU infrastructure,
+        and RAG in fully air-gapped environments. I write about AI &amp; infra on{" "}
+        <a href={NEWSLETTER.linkedinProfile} target="_blank" rel="noopener noreferrer" className={aLink}>
+          LinkedIn (5,000+ followers)
+        </a>{" "}
+        and on this{" "}
+        <Link href="/blog" className={aLink}>
+          blog
+        </Link>
+        , run an English academy{" "}
+        <Link href="/english" className={aLink}>
+          (Lia English)
+        </Link>
+        , and review 100+ SaaS tools I&apos;ve personally paid for.
+      </>
+    );
+  const entreBody =
+    lang === "ko" ? (
+      <>
+        $4K로 시작해 18개월 만에 정원(40명)을 채웠고, ARR $120K·순이익률 85%+를 달성했습니다.
+        프리미엄 가격 전략(지역 최고가)으로 95%+ 리텐션 — 0에서 서비스를 만들고·가격 책정하고·키운
+        경험입니다. 수업과 영어 학습 기록은{" "}
+        <Link href="/english" className={aLink}>
+          리아영어 블로그
+        </Link>
+        에 정리하고 있어요.
+      </>
+    ) : (
+      <>
+        Started with $4K and filled the academy to full capacity (40 students) in 18 months, reaching
+        $120K ARR at &gt;85% net margin. With a premium-pricing strategy (highest in the local market)
+        and 95%+ retention — hands-on experience building, pricing, and growing a service from zero. I
+        share lessons and English-learning notes on the{" "}
+        <Link href="/english" className={aLink}>
+          Lia English blog
+        </Link>
+        .
+      </>
+    );
 
   return (
     <div className="relative mx-auto max-w-2xl px-5 pb-24 pt-12">
@@ -181,7 +243,7 @@ export default function AboutContent() {
 
       <h1 className="text-3xl font-bold tracking-tight text-white">{d.name}</h1>
       <p className="mt-2 text-[15px] text-zinc-200">{d.role}</p>
-      <p className="mt-3 text-sm leading-relaxed text-muted">{d.intro}</p>
+      <p className="mt-3 text-sm leading-relaxed text-muted">{introNode}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <a href={`mailto:${EMAIL}`} className="rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] text-zinc-200 transition hover:border-accent/50 hover:text-white">
           ✉ {EMAIL}
@@ -233,7 +295,7 @@ export default function AboutContent() {
             <h3 className="text-base font-semibold text-white">{d.entre.title}</h3>
             <span className="text-xs text-muted">{d.entre.period}</span>
           </div>
-          <p className="mt-3">{d.entre.body}</p>
+          <p className="mt-3">{entreBody}</p>
         </div>
       </Section>
 

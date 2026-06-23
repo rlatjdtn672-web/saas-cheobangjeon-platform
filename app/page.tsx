@@ -51,8 +51,24 @@ export default async function HomePage() {
             {NEWSLETTER.cadence} · by {NEWSLETTER.author}
           </span>
           <h1 className="mt-5 text-4xl font-bold tracking-tight text-white">실전 SaaS 처방전</h1>
-          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-zinc-300">
-            {NEWSLETTER.bio}
+          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-300">
+            안녕하세요, 삼성전자에서 폐쇄망 LLM·GPU 인프라를 만드는 AI 인프라 엔지니어{" "}
+            <Link href="/about" className="text-accent hover:underline">
+              김성수
+            </Link>
+            입니다. LinkedIn에 AI·인프라 이야기를 쓰며{" "}
+            <a href={NEWSLETTER.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+              팔로워 5,000+
+            </a>
+            를 모았고, 영어 학원{" "}
+            <Link href="/english" className="text-accent hover:underline">
+              리아영어
+            </Link>
+            를 직접 운영합니다. 여기선{" "}
+            <Link href="/blog" className="text-accent hover:underline">
+              블로그
+            </Link>
+            ·리아영어·SaaS 리뷰를 한곳에 모읍니다.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5">
             <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/85">
