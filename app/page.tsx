@@ -64,11 +64,15 @@ export default async function HomePage() {
             <Link href="/english" className="text-accent hover:underline">
               리아영어
             </Link>
-            를 직접 운영합니다. 여기선{" "}
+를 직접 운영합니다. 여기선{" "}
             <Link href="/blog" className="text-accent hover:underline">
               블로그
             </Link>
-            ·리아영어·SaaS 리뷰를 한곳에 모읍니다.
+            ·리아영어와{" "}
+            <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+              SaaS 리뷰 뉴스레터
+            </a>
+            를 한곳에 모읍니다.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2.5">
             <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/85">

@@ -178,7 +178,11 @@ export default function AboutContent() {
         <Link href="/english" className={aLink}>
           리아영어
         </Link>
-        를 직접 운영하고, SaaS 100개를 결제해보며 솔직하게 리뷰합니다.
+        를 직접 운영하고, SaaS 100개를 결제해보며{" "}
+        <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className={aLink}>
+          격주 뉴스레터
+        </a>
+        로 솔직하게 리뷰합니다.
       </>
     ) : (
       <>
@@ -191,34 +195,38 @@ export default function AboutContent() {
         <Link href="/blog" className={aLink}>
           blog
         </Link>
-        , run an English academy{" "}
+        , founded and run an English academy{" "}
         <Link href="/english" className={aLink}>
           (Lia English)
         </Link>
-        , and review 100+ SaaS tools I&apos;ve personally paid for.
+        , and review 100+ SaaS tools I&apos;ve paid for in a{" "}
+        <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className={aLink}>
+          biweekly newsletter
+        </a>
+        .
       </>
     );
   const entreBody =
     lang === "ko" ? (
       <>
-        $4K로 시작해 18개월 만에 정원(40명)을 채웠고, ARR $120K·순이익률 85%+를 달성했습니다.
-        프리미엄 가격 전략(지역 최고가)으로 95%+ 리텐션 — 0에서 서비스를 만들고·가격 책정하고·키운
-        경험입니다. 수업과 영어 학습 기록은{" "}
+        엔지니어이면서 직접 교육 비즈니스{" "}
         <Link href="/english" className={aLink}>
-          리아영어 블로그
+          리아영어
         </Link>
-        에 정리하고 있어요.
+        를 창업해 운영했습니다. 고객을 모으고·마케팅하고·운영을 최적화하는 전 과정을 책임지며 0에서
+        정원(40명)까지 키웠어요. 이 경험에서 &apos;오프라인 사업자의 고객 획득&apos;이라는 문제를 깊이
+        이해했고, 지금은 그걸 데이터·AI로 자동화하는 걸 만들고 있습니다.
       </>
     ) : (
       <>
-        Started with $4K and filled the academy to full capacity (40 students) in 18 months, reaching
-        $120K ARR at &gt;85% net margin. With a premium-pricing strategy (highest in the local market)
-        and 95%+ retention — hands-on experience building, pricing, and growing a service from zero. I
-        share lessons and English-learning notes on the{" "}
+        As an engineer, I also founded and ran an education business,{" "}
         <Link href="/english" className={aLink}>
-          Lia English blog
+          Lia English
         </Link>
-        .
+        — owning the full cycle of customer acquisition, marketing, and operations, and growing it
+        from zero to full capacity (40 students). That taught me the real problem of customer
+        acquisition for offline businesses, and I&apos;m now building ways to automate it with data
+        &amp; AI.
       </>
     );
 
