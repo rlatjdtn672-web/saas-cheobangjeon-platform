@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { marked } from "marked";
 import { SECTION_LIST, SECTIONS } from "@/lib/sections";
+import MarkdownEditor from "./MarkdownEditor";
 
 type Post = {
   id: string;
@@ -35,18 +35,15 @@ const secTitle = (k: string) => (SECTIONS as any)[k]?.title ?? k;
 export default function BlogManager({ posts }: { posts: Post[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Draft | null>(null);
-  const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
   function openNew() {
     setErr("");
-    setPreview(false);
     setEditing({ ...EMPTY });
   }
   function openEdit(p: Post) {
     setErr("");
-    setPreview(false);
     setEditing({
       id: p.id,
       slug: p.slug,
@@ -148,28 +145,15 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
           placeholder="요약(목록·검색에 노출)"
         />
 
-        <div className="flex items-center justify-between">
-          <label className="text-[11px] uppercase tracking-wide text-muted">본문 (마크다운)</label>
-          <button
-            onClick={() => setPreview((p) => !p)}
-            className="rounded-md border border-border px-2 py-1 text-[11px] text-muted hover:text-white"
-          >
-            {preview ? "✏️ 편집" : "👁 미리보기"}
-          </button>
+        <div>
+          <label className="text-[11px] uppercase tracking-wide text-muted">본문</label>
+          <div className="mt-1">
+            <MarkdownEditor
+              value={editing.body}
+              onChange={(v) => setEditing({ ...editing, body: v })}
+            />
+          </div>
         </div>
-        {preview ? (
-          <div
-            className="post-body min-h-[300px] rounded-lg border border-border bg-card p-4 text-[15px] leading-relaxed text-zinc-200"
-            dangerouslySetInnerHTML={{ __html: marked.parse(editing.body || "*(내용 없음)*") as string }}
-          />
-        ) : (
-          <textarea
-            className={inp + " min-h-[300px] font-mono text-[13px] leading-relaxed"}
-            value={editing.body}
-            onChange={(e) => setEditing({ ...editing, body: e.target.value })}
-            placeholder={"# 제목\n\n마크다운으로 작성하세요.\n\n- 목록\n- **굵게**\n- [링크](https://...)"}
-          />
-        )}
 
         {err && <p className="text-xs text-red-400">{err}</p>}
 
