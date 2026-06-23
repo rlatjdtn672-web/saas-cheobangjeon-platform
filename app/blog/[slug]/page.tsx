@@ -10,10 +10,10 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const post = await getPublishedPost(params.slug, "main");
-  if (!post) return { title: "블로그 — 실전 SaaS 처방전" };
+  if (!post) return { title: "블로그 — seungsu.com" };
   const desc = post.excerpt || post.body?.slice(0, 120) || "";
   return {
-    title: `${post.title} — 실전 SaaS 처방전`,
+    title: `${post.title} — seungsu.com`,
     description: desc,
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: { title: post.title, description: desc, type: "article" },

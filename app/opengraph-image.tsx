@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "실전 SaaS 처방전 — 인디 SaaS 리뷰 & 임팩트";
+export const alt = "김성수 (Sungsu Kim) — AI 인프라 엔지니어 · seungsu.com";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -46,32 +46,32 @@ export default async function Image() {
               borderRadius: 18,
               background: "#5b8cff",
               color: "#fff",
-              fontSize: 40,
-              fontStyle: "italic",
+              fontSize: 42,
+              fontWeight: 700,
             }}
           >
-            Rx
+            S
           </div>
-          <div style={{ fontSize: 30, color: "#8b949e" }}>실전 SaaS 처방전</div>
+          <div style={{ fontSize: 30, color: "#8b949e" }}>김성수 · Sungsu Kim</div>
         </div>
 
         {/* 중앙: 헤드라인 */}
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 76, lineHeight: 1.15, color: "#ffffff" }}>
-            인디 SaaS, 직접 써보고
+          <div style={{ fontSize: 70, lineHeight: 1.18, color: "#ffffff" }}>
+            AI 인프라를 만들고,
           </div>
-          <div style={{ display: "flex", fontSize: 76, lineHeight: 1.15, color: "#ffffff" }}>
-            <span style={{ color: "#5b8cff", marginRight: 24 }}>솔직하게</span>
-            <span>처방합니다</span>
+          <div style={{ display: "flex", fontSize: 70, lineHeight: 1.18, color: "#ffffff" }}>
+            <span>글을 쓰고,</span>
+            <span style={{ color: "#5b8cff", marginLeft: 22 }}>가르칩니다</span>
           </div>
           <div style={{ marginTop: 22, fontSize: 30, color: "#aeb7c2" }}>
-            리뷰 · 트래픽 임팩트 · GitHub 스타 추적
+            블로그 · 리아영어 · SaaS 리뷰
           </div>
         </div>
 
         {/* 하단 */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 26, color: "#8b949e" }}>by 김성수 · 격주 발행</div>
+          <div style={{ fontSize: 26, color: "#8b949e" }}>삼성전자 AI 인프라 엔지니어</div>
           <div style={{ fontSize: 30, color: "#22c55e" }}>seungsu.com</div>
         </div>
       </div>

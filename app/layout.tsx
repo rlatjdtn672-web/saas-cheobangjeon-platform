@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { NEWSLETTER } from "@/data/seed";
-import { SITE_URL, GOOGLE_SITE_VERIFICATION, NAVER_SITE_VERIFICATION } from "@/lib/seo";
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_TAGLINE,
+  GOOGLE_SITE_VERIFICATION,
+  NAVER_SITE_VERIFICATION,
+} from "@/lib/seo";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "실전 SaaS 처방전 — 인디 SaaS 리뷰",
+    default: SITE_TITLE,
     template: "%s",
   },
-  description: NEWSLETTER.tagline,
-  keywords: ["SaaS", "SaaS 리뷰", "실전 SaaS 처방전", "김성수", "n8n", "PRISM-INSIGHT", "TradingAgents"],
+  description: SITE_TAGLINE,
+  keywords: ["김성수", "Sungsu Kim", "AI 인프라", "LLMOps", "리아영어", "영어학원", "블로그", "SaaS 리뷰"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "실전 SaaS 처방전",
-    description: NEWSLETTER.tagline,
+    title: SITE_TITLE,
+    description: SITE_TAGLINE,
     type: "website",
     url: SITE_URL,
-    siteName: "실전 SaaS 처방전",
+    siteName: SITE_NAME,
     locale: "ko_KR",
   },
   twitter: {
     card: "summary",
-    title: "실전 SaaS 처방전",
-    description: NEWSLETTER.tagline,
+    title: SITE_TITLE,
+    description: SITE_TAGLINE,
   },
   robots: { index: true, follow: true },
   verification: {

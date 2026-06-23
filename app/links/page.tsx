@@ -5,7 +5,7 @@ import LoginForm from "@/app/components/LoginForm";
 import LinksManager from "@/app/components/LinksManager";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "단축 링크 — 실전 SaaS 처방전", robots: { index: false } };
+export const metadata = { title: "단축 링크 — seungsu.com", robots: { index: false } };
 
 export default async function LinksPage() {
   const pw = cookies().get(DASH_COOKIE)?.value;

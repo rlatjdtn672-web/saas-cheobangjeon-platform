@@ -18,9 +18,9 @@ export async function GET() {
   } catch {}
 
   const lines = [
-    `# 실전 SaaS 처방전 (${SITE_URL})`,
+    `# 김성수 (Sungsu Kim) · ${SITE_URL}`,
     "",
-    `> ${NEWSLETTER.bio} 작성자 ${NEWSLETTER.author}. ${NEWSLETTER.cadence}.`,
+    `> 삼성전자 AI 인프라 엔지니어. AI·인프라 블로그, 영어 학원 '리아영어', SaaS 리뷰(뉴스레터 '실전 SaaS 처방전')를 한곳에 모은 개인 사이트.`,
     "",
     "## 리뷰한 SaaS",
     ...saas.map((s) => `- [${s.name}](${SITE_URL}/s/${s.slug}): ${s.tagline}`),

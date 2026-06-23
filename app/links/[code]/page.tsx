@@ -6,7 +6,7 @@ import LoginForm from "@/app/components/LoginForm";
 import LinkDetailView from "@/app/components/LinkDetailView";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "링크 통계 — 실전 SaaS 처방전", robots: { index: false } };
+export const metadata = { title: "링크 통계 — seungsu.com", robots: { index: false } };
 
 export default async function LinkDetailPage({ params }: { params: { code: string } }) {
   const pw = cookies().get(DASH_COOKIE)?.value;

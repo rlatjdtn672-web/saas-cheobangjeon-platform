@@ -46,9 +46,9 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const saas = await getStore().getSaas(params.slug);
-  if (!saas) return { title: "실전 SaaS 처방전" };
+  if (!saas) return { title: "seungsu.com" };
   return {
-    title: `${saas.name} — 실전 SaaS 처방전`,
+    title: `${saas.name} — seungsu.com`,
     description: saas.tagline,
     openGraph: { title: saas.name, description: saas.tagline, type: "article" },
   };
@@ -90,7 +90,7 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
       <div className="relative mx-auto max-w-md px-5 pb-24 pt-10">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-[13px] text-muted hover:text-white">
-            ← 처방전 목록
+            ← 홈
           </Link>
           <div className="flex items-center gap-2">
             {canEdit && (

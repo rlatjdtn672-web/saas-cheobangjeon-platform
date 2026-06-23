@@ -6,7 +6,7 @@ import LoginForm from "@/app/components/LoginForm";
 import DashboardView from "@/app/components/DashboardView";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "유입 대시보드 — 실전 SaaS 처방전", robots: { index: false } };
+export const metadata = { title: "유입 대시보드 — seungsu.com", robots: { index: false } };
 
 export default async function DashboardPage() {
   const pw = cookies().get(DASH_COOKIE)?.value;
