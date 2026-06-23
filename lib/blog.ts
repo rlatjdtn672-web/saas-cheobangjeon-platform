@@ -13,6 +13,7 @@ export type Post = {
   body: string | null;
   cover_url: string | null;
   published: boolean;
+  section: string;
   created_at: string;
   updated_at: string;
 };
@@ -42,15 +43,17 @@ async function rpc(fn: string, body: any) {
   }
 }
 
-// 공개: 발행된 글만
-export async function listPublishedPosts(): Promise<Post[]> {
+// 공개: 발행된 글만 (section 지정 시 해당 탭만)
+export async function listPublishedPosts(section?: string): Promise<Post[]> {
+  const secFilter = section ? `&section=eq.${encodeURIComponent(section)}` : "";
   return rest(
-    "posts?select=id,slug,title,excerpt,cover_url,published,created_at,updated_at&published=eq.true&order=created_at.desc"
+    `posts?select=id,slug,title,excerpt,cover_url,published,section,created_at,updated_at&published=eq.true${secFilter}&order=created_at.desc`
   );
 }
-export async function getPublishedPost(slug: string): Promise<Post | null> {
+export async function getPublishedPost(slug: string, section?: string): Promise<Post | null> {
+  const secFilter = section ? `&section=eq.${encodeURIComponent(section)}` : "";
   const rows = await rest(
-    `posts?select=*&slug=eq.${encodeURIComponent(slug)}&published=eq.true&limit=1`
+    `posts?select=*&slug=eq.${encodeURIComponent(slug)}&published=eq.true${secFilter}&limit=1`
   );
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
@@ -70,6 +73,7 @@ export async function upsertPost(
     body?: string;
     cover?: string;
     published?: boolean;
+    section?: string;
   }
 ) {
   return rpc("upsert_post", {
@@ -81,6 +85,7 @@ export async function upsertPost(
     p_body: p.body ?? "",
     p_cover: p.cover ?? "",
     p_published: p.published ?? false,
+    p_section: p.section ?? "main",
   });
 }
 export async function deletePost(pw: string, id: string) {

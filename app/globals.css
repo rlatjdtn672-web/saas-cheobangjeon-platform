@@ -26,6 +26,31 @@ a {
   );
 }
 
+/* ── 라이트 모드 (html[data-theme="light"]) ── */
+html[data-theme="light"] body {
+  background: #f6f8fa;
+  color: #1f2937;
+}
+html[data-theme="light"] .glow {
+  background: radial-gradient(600px circle at 50% -10%, rgba(91, 140, 255, 0.12), transparent 60%);
+}
+html[data-theme="light"] .bg-card { background: #ffffff !important; }
+html[data-theme="light"] .bg-paper { background: #eef1f5 !important; }
+html[data-theme="light"] .border-border { border-color: #e3e7ec !important; }
+html[data-theme="light"] .text-white { color: #0d1117 !important; }
+html[data-theme="light"] .text-zinc-200,
+html[data-theme="light"] .text-zinc-300 { color: #374151 !important; }
+html[data-theme="light"] .text-muted { color: #6b7280 !important; }
+html[data-theme="light"] .bg-white\/5 { background: rgba(0, 0, 0, 0.05) !important; }
+html[data-theme="light"] .hover\:bg-white\/\[0\.03\]:hover { background: rgba(0, 0, 0, 0.03) !important; }
+html[data-theme="light"] .post-body { color: #374151; }
+html[data-theme="light"] .post-body h1,
+html[data-theme="light"] .post-body h2,
+html[data-theme="light"] .post-body h3,
+html[data-theme="light"] .post-body strong { color: #0d1117; }
+html[data-theme="light"] .post-body code { background: rgba(0, 0, 0, 0.06); }
+html[data-theme="light"] .post-body pre { background: #f3f4f6; border-color: #e5e7eb; }
+
 /* 블로그 본문(마크다운) 스타일 */
 .post-body h1,
 .post-body h2,

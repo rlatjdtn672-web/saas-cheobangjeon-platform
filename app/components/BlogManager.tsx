@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { marked } from "marked";
+import { SECTION_LIST, SECTIONS } from "@/lib/sections";
 
 type Post = {
   id: string;
@@ -12,6 +13,7 @@ type Post = {
   body: string | null;
   cover_url: string | null;
   published: boolean;
+  section: string;
   created_at: string;
   updated_at: string;
 };
@@ -24,9 +26,11 @@ type Draft = {
   body: string;
   cover: string;
   published: boolean;
+  section: string;
 };
 
-const EMPTY: Draft = { slug: "", title: "", excerpt: "", body: "", cover: "", published: true };
+const EMPTY: Draft = { slug: "", title: "", excerpt: "", body: "", cover: "", published: true, section: "main" };
+const secTitle = (k: string) => (SECTIONS as any)[k]?.title ?? k;
 
 export default function BlogManager({ posts }: { posts: Post[] }) {
   const router = useRouter();
@@ -51,6 +55,7 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
       body: p.body ?? "",
       cover: p.cover_url ?? "",
       published: p.published,
+      section: p.section ?? "main",
     });
   }
 
@@ -108,6 +113,20 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
           onChange={(e) => setEditing({ ...editing, title: e.target.value })}
           placeholder="제목"
         />
+        <div>
+          <label className="text-[11px] uppercase tracking-wide text-muted">탭(섹션)</label>
+          <select
+            value={editing.section}
+            onChange={(e) => setEditing({ ...editing, section: e.target.value })}
+            className={inp + " mt-1"}
+          >
+            {SECTION_LIST.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input
             className={inp}
@@ -197,6 +216,9 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="truncate font-semibold text-white">{p.title}</span>
+                <span className="flex-none rounded-full bg-accent/15 px-2 py-0.5 text-[11px] text-accent">
+                  {secTitle(p.section)}
+                </span>
                 <span
                   className={`flex-none rounded-full px-2 py-0.5 text-[11px] ${
                     p.published ? "bg-accent2/15 text-accent2" : "bg-white/5 text-muted"
@@ -206,11 +228,16 @@ export default function BlogManager({ posts }: { posts: Post[] }) {
                 </span>
               </div>
               <p className="mt-0.5 truncate text-xs text-muted">
-                /blog/{p.slug} · {p.created_at?.slice(0, 10)}
+                {(SECTIONS as any)[p.section]?.path ?? "/blog"}/{p.slug} · {p.created_at?.slice(0, 10)}
               </p>
             </div>
             {p.published && (
-              <a href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded-md border border-border px-2 py-1 text-[11px] text-muted hover:text-white">
+              <a
+                href={`${(SECTIONS as any)[p.section]?.path ?? "/blog"}/${p.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md border border-border px-2 py-1 text-[11px] text-muted hover:text-white"
+              >
                 보기 ↗
               </a>
             )}

@@ -9,17 +9,17 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const post = await getPublishedPost(params.slug, "main");
-  if (!post) return { title: "블로그 — 실전 SaaS 처방전" };
+  const post = await getPublishedPost(params.slug, "lia");
+  if (!post) return { title: "리아영어 — seungsu.com" };
   const desc = post.excerpt || post.body?.slice(0, 120) || "";
   return {
-    title: `${post.title} — 실전 SaaS 처방전`,
+    title: `${post.title} — 리아영어`,
     description: desc,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: `/english/${post.slug}` },
     openGraph: { title: post.title, description: desc, type: "article" },
   };
 }
 
-export default function PostPage({ params }: { params: { slug: string } }) {
-  return <SectionPost slug={params.slug} sectionKey="main" />;
+export default function EnglishPostPage({ params }: { params: { slug: string } }) {
+  return <SectionPost slug={params.slug} sectionKey="lia" />;
 }

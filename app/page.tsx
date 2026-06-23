@@ -2,6 +2,7 @@ import { getStore } from "@/lib/store";
 import { NEWSLETTER } from "@/data/seed";
 import SaasCard from "./components/SaasCard";
 import PageViewTracker from "./components/PageViewTracker";
+import SiteHeader from "./components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export default async function HomePage() {
 
   return (
     <main className="relative">
+      <SiteHeader />
       <PageViewTracker type="page_view" />
       <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[260px]" />
 
