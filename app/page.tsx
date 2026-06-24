@@ -3,9 +3,9 @@ import { getStore } from "@/lib/store";
 import { listPublishedPosts } from "@/lib/blog";
 import { NEWSLETTER } from "@/data/seed";
 import SaasCard from "./components/SaasCard";
-import PageViewTracker from "./components/PageViewTracker";
 import SiteHeader from "./components/SiteHeader";
 import AboutContent from "./components/AboutContent";
+import VisitorCounter from "./components/VisitorCounter";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,6 @@ export default async function HomePage() {
   return (
     <main className="relative">
       <SiteHeader />
-      <PageViewTracker type="page_view" />
       <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
 
       {/* 자기소개 (About) */}
@@ -92,7 +91,10 @@ export default async function HomePage() {
               LinkedIn DM
             </a>
           </p>
-          <p className="mt-4 text-xs">seungsu.com · by {NEWSLETTER.author}</p>
+          <div className="mt-4">
+            <VisitorCounter />
+          </div>
+          <p className="mt-3 text-xs">seungsu.com · by {NEWSLETTER.author}</p>
         </footer>
       </div>
     </main>

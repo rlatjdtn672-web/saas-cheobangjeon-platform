@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { track } from "@/lib/browser";
 import ThemeToggle from "./ThemeToggle";
 
 const TABS = [
@@ -13,6 +15,16 @@ const TABS = [
 export default function SiteHeader() {
   const p = usePathname() || "/";
   const active = (path: string) => (path === "/" ? p === "/" : p.startsWith(path));
+
+  // 공개 페이지 방문 집계 (세션·경로별 1회)
+  useEffect(() => {
+    const key = `scb-pv-${p}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {}
+    track("page_view");
+  }, [p]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-paper/80 backdrop-blur">
