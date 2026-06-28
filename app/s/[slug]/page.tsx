@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { getStore } from "@/lib/store";
 import { NEWSLETTER } from "@/data/seed";
@@ -9,6 +9,9 @@ import PageViewTracker from "@/app/components/PageViewTracker";
 import TrackedLink from "@/app/components/TrackedLink";
 import CopyLinkButton from "@/app/components/CopyLinkButton";
 import EditPanel from "@/app/components/EditPanel";
+import SiteHeader from "@/app/components/SiteHeader";
+import LabView from "@/app/components/LabView";
+import { LAB_TASKS } from "@/data/lab";
 
 import type { Saas, SaasButton, ButtonKind } from "@/lib/types";
 
@@ -55,8 +58,17 @@ export async function generateMetadata({
 }
 
 export default async function SaasDetail({ params }: { params: { slug: string } }) {
-  // 실험실(4호)은 별도 상세 없이 곧장 /lab 으로 — 한 번에 진입
-  if (params.slug === "ai-lab") redirect("/lab");
+  // 실험실(4호)은 이 상세 URL(/s/ai-lab)에 실험실 페이지를 그대로 렌더 → 링크 진입 = 유입(saas_view) 집계
+  if (params.slug === "ai-lab") {
+    return (
+      <main className="relative">
+        <PageViewTracker type="saas_view" saasId="ai-lab" />
+        <SiteHeader />
+        <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
+        <LabView tasks={LAB_TASKS} />
+      </main>
+    );
+  }
 
   const saas = await getStore().getSaas(params.slug);
   if (!saas) notFound();

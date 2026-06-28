@@ -20,12 +20,10 @@ function Logo({ saas }: { saas: Saas }) {
 }
 
 // 메인 목록: SaaS 한 줄 행 (전체 클릭 시 상세 연결창구로)
-// ai-lab(실험실)은 별도 상세 없이 곧장 /lab 으로 — 한 번에 진입(=유입 측정)
 export default function SaasCard({ saas }: { saas: Saas }) {
-  const href = saas.slug === "ai-lab" ? "/lab" : `/s/${saas.slug}`;
   return (
     <Link
-      href={href}
+      href={`/s/${saas.slug}`}
       className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 transition hover:border-accent/50"
     >
       <Logo saas={saas} />
