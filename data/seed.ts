@@ -20,6 +20,28 @@ export const NEWSLETTER = {
 
 export const SEED_SAAS: Saas[] = [
   {
+    id: "ai-lab",
+    slug: "ai-lab",
+    name: "AI 모델 실험실",
+    tagline:
+      "같은 프롬프트 하나로 Claude·Qwen·Gemma·Llama·Mistral 등 7개 AI 모델에게 테트리스·2048·스트리트 파이터·길건너 친구들을 만들게 시키고, 직접 다 돌려본 결과를 비교했습니다. 누가 진짜 '작동하는' 게임을 만들까?",
+    description:
+      "7개 모델 × 4개 게임 빌드 벤치마크. 모델마다 만든 결과물을 그대로 실행해보고 정상 작동 / 작동 이상 / 생성 실패로 직접 판정했습니다.",
+    category: "AI / 벤치마크",
+    pricing: "오픈",
+    websiteUrl: "https://seungsu.com/lab",
+    buttons: [
+      { kind: "website", label: "실험실 열기 — 7개 모델 결과물 비교·플레이", url: "/lab", enabled: true },
+    ],
+    links: [],
+    reviewTitle: "AI 모델 실험실 — 같은 미션, 다른 모델",
+    reviewUrl:
+      "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
+    publishedAt: "2026-06-28",
+    issueNo: "4호",
+    featured: true,
+  },
+  {
     id: "prism-insight",
     slug: "prism-insight",
     name: "PRISM-INSIGHT",
