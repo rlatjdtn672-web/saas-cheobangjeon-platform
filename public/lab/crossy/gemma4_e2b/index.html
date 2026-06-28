@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frogger Hopper</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #333;
+            font-family: monospace;
+        }
+        #game-container {
+            position: relative;
+            border: 2px solid white;
+            background-color: #111;
+            /* Canvas will be positioned absolutely within this container */
+        }
+        canvas {
+            display: block;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+        }
+        #restart-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="game-over-screen">
+            <h1>Game Over!</h1>
+            <p id="final-score">Score: 0</p>
+            <button id="restart-button">Restart (R)</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        const LANE_WIDTH = CANVAS_WIDTH / 10; // 10 lanes
+        const LANE_HEIGHT = 50;
+        const TOTAL_LANES = 20; // How many lanes are visible/active at once
+        const SCROLL_SPEED = 3; // How fast the world moves relative to the player position
+        const PLAYER_SPEED = 1; // Player movement is in grid steps
+        const MAX_SCORE_KEY = 'frogger_best_score';
+
+        // --- Canvas Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const restartButton = document.getElementById('restart-button');
+        const gameContainer = document.getElementById('game-container');
+
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+
+        // --- Game State ---
+        let gameState = {
+            isRunning: false,
+            score: 0,
+            bestScore: parseInt(localStorage.getItem(MAX_SCORE_KEY)) || 0,
+            player: { x: Math.floor(TOTAL_LANES / 2), y: 0 },
+            lanes: [],
+            scrollOffset: 0,
+        };
+
+        let keys = { up: false, down: false, left: false, right: false };
+        let animationFrameId = null;
+
+        // --- Lane Definition ---
+        const LANE_TYPES = {
+            GRASS: 0,   // Safe grass
+            ROAD: 1,    // Road with moving traffic
+            RIVER: 2    // River with logs (must stand on log)
+        };
+
+        // --- Lane Generation ---
+        function generateInitialLanes() {
+            gameState.lanes = [];
+            for (let i = 0; i < TOTAL_LANES; i++) {
+                // Randomly assign a type for initial layout
+                const type = Math.floor(Math.random() * 3);
+
+                let laneData = {
+                    laneIndex: i,
+                    type: type,
+                    y: i * LANE_HEIGHT,
+                    // Dynamic movement for road/river elements
+                    movingObjects: [],
+                    spawnTime: 0 // Time when this lane was generated (for spawning)
+                };
+
+                // Initialize lane based on type
+                if (type === LANE_TYPES.ROAD) {
+                    // Add moving traffic to road lanes
+                    laneData.movingObjects.push({
+                        type: 'car',
+                        speed: Math.random() * 1 + 1, // Speed between 1 and 2 units/frame
+                        direction: Math.random() < 0.5 ? 1 : -1, // 1=right, -1=left
+                        spawnX: Math.random() * (TOTAL_LANES - 2) + 1,
+                        width: LANE_WIDTH * 1.5 // Car is wider
+                    });
+                } else if (type === LANE_TYPES.RIVER) {
+                    // Add floating logs
+                    laneData.movingObjects.push({
+                        type: 'log',
+                        speed: Math.random() * 0.5 + 0.5, // Slow float speed
+                        direction: Math.random() < 0.5 ? 1 : -1,
+                        spawnX: Math.random() * (TOTAL_LANES - 2) + 1,
+                        width: LANE_WIDTH * 1.5
+                    });
+                }
+
+                gameState.lanes.push(laneData);
+            }
+        }
+
+        // --- Update Game Logic ---
+        function update() {
+            if (!gameState.isRunning) return;
+
+            // 1. Update Scroll Offset
+            gameState.scrollOffset += SCROLL_SPEED;
+
+            // 2. Update Player Position based on movement
+            let newX = gameState.player.x;
+
+            if (keys.left) {
+                newX = Math.max(0, gameState.player.x - 1);
+            }
+            if (keys.right) {
+                newX = Math.min(TOTAL_LANES - 1, gameState.player.x + 1);
+            }
+            if (keys.up) {
+                // Moving forward (to the next lane index in the scrolling world)
+                // This is the core "hopping" mechanic, simulate moving forward through the lanes
+                gameState.player.y += 1; // Player advances vertically through the lanes
+            }
+            if (keys.down) {
+                // Moving backward
+                gameState.player.y = Math.max(0, gameState.player.y - 1);
+            }
+
+            gameState.player.x = newX; // Apply side movement
+
+            // 3. Lane Generation and Cleanup (Scrolling effect)
+            // New lanes are "generated" (i.e., appeared) as the player moves forward (player.y increases)
+
+            // Remove lanes that have passed the bottom boundary (Game Over condition)
+            const lastLaneY = (gameState.player.y + 1) * LANE_HEIGHT; // Approximate lane index passed
+
+            gameState.lanes = gameState.lanes.filter(lane => {
+                // Check if the lane is still relevant (hasn't scrolled completely off screen)
+                // We keep a buffer of lanes slightly ahead of the player
+                // If lane.y (which is the index) is far behind the player's advancement point, it's old.
+                // Since player.y tracks progression, we just keep the lanes currently visible or slightly ahead.
+                return true;
+            });
+
+            // Re-apply the lane structure based on scroll offset for visual effect
+            // Since the player's Y dictates the world advancement, we need to shift the world content.
+            gameState.lanes.forEach(lane => {
+                // In this simplified model, we assume the lane structure scrolls based on the player's advancement.
+                // The y position keeps the layout fixed relative to the player's current 'view' plane.
+                // A proper implementation would shift the lane data relative to scrollOffset.
+            });
+
+
+            // 4. Update Moving Objects (Cars/Logs)
+            gameState.lanes.forEach(lane => {
+                lane.movingObjects.forEach(obj => {
+                    if (obj.type === 'car') {
+                        obj.spawnX -= obj.speed;
+                        if (obj.spawnX < -obj.width) {
+                            // Remove object if it goes off screen
+                            lane.movingObjects = lane.movingObjects.filter(o => o !== obj);
+                        }
+                    } else if (obj.type === 'log') {
+                        obj.spawnX -= obj.speed;
+                        if (obj.spawnX < -obj.width) {
+                            // Remove object if it goes off screen
+                            lane.movingObjects = lane.movingObjects.filter(o => o !== obj);
+                        }
+                    }
+                });
+            });
+
+            // 5. Check for Game Over (Falling too far behind the bottom)
+            // If player Y position is too far advanced relative to the visible lanes, it's game over.
+            if (gameState.player.y > TOTAL_LANES * 2) {
+                 endGame();
+            }
+
+            // 6. Update Score
+            gameState.score = gameState.player.y; // Score is based on how many lanes have been reached
+
+            // 7. Redraw
+            draw();
+
+            // Request next frame
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        // --- Drawing Functions ---
+        function draw() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Draw Score Overlay (for debugging/display, optional)
+            ctx.fillStyle = 'white';
+            ctx.font = '16px monospace';
+            ctx.fillText(`Score: ${gameState.score}`, 10, 20);
+
+            // Draw Lanes Background (Grass/Road/River)
+            gameState.lanes.forEach(lane => {
+                const yPos = lane.y * LANE_HEIGHT;
+
+                if (lane.type === LANE_TYPES.GRASS) {
+                    ctx.fillStyle = '#4CAF50'; // Grass color
+                } else if (lane.type === LANE_TYPES.ROAD) {
+                    ctx.fillStyle = '#555'; // Road color
+                } else if (lane.type === LANE_TYPES.RIVER) {
+                    ctx.fillStyle = '#222'; // Water color
+                }
+
+                ctx.fillRect(0, yPos, CANVAS_WIDTH, LANE_HEIGHT);
+            });
+
+
+            // Draw Moving Objects (Cars/Logs)
+            gameState.lanes.forEach(lane => {
+                const yPos = lane.y * LANE_HEIGHT;
+
+                lane.movingObjects.forEach(obj => {
+                    let drawX = obj.spawnX + (gameState.scrollOffset - (lane.y * SCROLL_SPEED)); // Account for scroll
+
+                    if (obj.type === 'car') {
+                        // Draw Car
+                        ctx.fillStyle = '#FF0000'; // Red car
+                        ctx.fillRect(drawX, yPos + (LANE_HEIGHT - 10), obj.width, 10);
+                    } else if (obj.type === 'log') {
+                        // Draw Log. Logs float on the water.
+                        ctx.fillStyle = '#8B4513'; // Brown log
+                        ctx.fillRect(drawX, yPos + (LANE_HEIGHT - 15), obj.width, 15);
+                    }
+                });
+            });
+
+            // Draw Player (Frog)
+            const playerYPos = gameState.player.y * LANE_HEIGHT;
+            ctx.fillStyle = 'blue'; // Player color
+            ctx.fillRect(LANE_WIDTH / 2 - 5, playerYPos, 10, LANE_HEIGHT);
+        }
+
+
+        // --- Game Control ---
+        function startGame() {
+            if (gameState.isRunning) return;
+
+            // Reset State
+            gameState.isRunning = true;
+            gameState.score = 0;
+            gameState.player.x = Math.floor(TOTAL_LANES / 2);
+            gameState.player.y = 0;
+            gameState.scrollOffset = 0;
+
+            // Load or Generate new lanes
+            generateInitialLanes();
+
+            // Start the main loop
+            animationFrameId = requestAnimationFrame(update);
+
+            gameOverScreen.style.display = 'none';
+        }
+
+        function endGame() {
+            gameState.isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+
+            // Update Best Score
+            if (gameState.score > gameState.bestScore) {
+                gameState.bestScore = gameState.score;
+                localStorage.setItem(MAX_SCORE_KEY, gameState.bestScore);
+            }
+
+            document.getElementById('final-score').textContent = `Score: ${gameState.score}`;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function setupInput() {
+            document.addEventListener('keydown', (e) => {
+                if (!gameState.isRunning) return;
+                if (e.key === 'ArrowUp' || e.key === 'w') keys.up = true;
+                if (e.key === 'ArrowDown' || e.key === 's') keys.down = true;
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (!gameState.isRunning) return;
+                if (e.key === 'ArrowUp' || e.key === 'w') keys.up = false;
+                if (e.key === 'ArrowDown' || e.key === 's') keys.down = false;
+                if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+            });
+
+            // Restart functionality
+            restartButton.onclick = () => {
+                localStorage.removeItem(MAX_SCORE_KEY); // Optionally clear old best score on restart for a fresh challenge
+                startGame();
+            };
+        }
+
+        // --- Initialization ---
+        window.onload = () => {
+            setupInput();
+            // Initial setup to prompt for game start (or just wait for first input)
+            gameOverScreen.style.display = 'flex';
+            document.getElementById('final-score').textContent = `Best Score: ${gameState.bestScore}`;
+        };
+
+    </script>
+</body>
+</html>

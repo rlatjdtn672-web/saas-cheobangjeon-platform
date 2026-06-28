@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { margin: 0; background: #000; color: #fff; font-family: monospace; }
+#game { display: grid; grid-template-columns: repeat(10, 30px); grid-template-rows: repeat(20, 30px); gap: 1px; width: 310px; height: 620px; margin: 20px auto; background: #111; }
+.cell { width: 30px; height: 30px; }
+#score { position: absolute; top: 10px; left: 10px; font-size: 20px; }
+#game-over { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="score">Score: 0</div>
+<div id="game-over">Game Over!<br>Press R to Restart</div>
+<script>
+const game = document.getElementById('game');
+const scoreDisplay = document.getElementById('score');
+const gameOverDisplay = document.getElementById('game-over');
+let score = 0;
+
+// Tetromino shapes and colors
+const tetrominoes = {
+ I: [[0,1],[0,0],[0,-1],[0,-2],'cyan'],
+ O: [[0,0],[0,1],[1,0],[1,1],'yellow'],
+ T: [[0,0],[0,1],[0,2],[-1,1],'purple'],
+ S: [[0,0],[0,1],[1,1],[1,2],'green'],
+ Z: [[0,1],[0,0],[-1,0],[-1,1],'red'],
+ J: [[0,0],[0,1],[0,2],[-1,0],'blue'],
+ L: [[0,0],[0,1],[0,2],[1,2],'orange']
+};
+
+let board = Array.from({length: 20}, () => Array(10).fill(0));
+let currentPiece = null;
+let interval = null;
+
+function createPiece() {
+ const shape = Object.values(tetrominoes)[Math.floor(Math.random() * Object.keys(tetrominoes).length)];
+ return { shape: shape.slice(0, -1), color: shape[shape.length-1], x: 3, y: 0 };
+}
+
+function drawPiece(piece) {
+ for (let [dx, dy] of piece.shape) {
+  const cell = document.querySelector(`#game div:nth-child(${piece.y + dy + 1})`);
+  cell.style.backgroundColor = piece.color;
+ }
+}
+
+function clearLines() {
+ let lines = 0;
+ for (let y = 19; y >= 0; y--) {
+  let full = true;
+  for (let x = 0; x < 10; x++) {
+   if (board[y][x] === 0) {
+    full = false;
+    break;
+   }
+  }
+  if (full) {
+   lines++;
+   for (let y2 = y; y2 > 0; y2--) {
+    for (let x = 0; x < 10; x++) {
+     board[y2][x] = board[y2-1][x];
+    }
+   }
+   for (let x = 0; x < 10; x++) {
+    board[0][x] = 0;
+   }
+  }
+ }
+ score += lines * 10;
+ scoreDisplay.innerHTML = `Score: ${score}`;
+}
+
+function isValidMove(piece, x, y) {
+ for (let [dx, dy] of piece.shape) {
+  const nx = x + dx;
+  const ny = y + dy;
+  if (nx < 0 || nx >= 10 || ny >= 20 || (ny >= 0 && board[ny][nx] !== 0)) {
+   return false;
+  }
+ }
+ return true;
+}
+
+function mergePiece() {
+ for (let [dx, dy] of currentPiece.shape) {
+  board[currentPiece.y + dy][currentPiece.x + dx] = 1;
+ }
+}
+
+function rotatePiece(piece) {
+ const newShape = piece.shape.map(([dx, dy]) => [-dy, dx]);
+ if (isValidMove({ shape: newShape, color: piece.color }, piece.x, piece.y)) {
+  piece.shape = newShape;
+ } else {
+  const newShape2 = piece.shape.map(([dx, dy]) => [dy, -dx]);
+  if (isValidMove({ shape: newShape2, color: piece.color }, piece.x, piece.y)) {
+   piece.shape = newShape2;
+  }
+ }
+}
+
+function movePiece(dx, dy) {
+ if (isValidMove(currentPiece, currentPiece.x + dx, currentPiece.y + dy)) {
+  currentPiece.x += dx;
+  currentPiece.y += dy;
+ } else if (dy > 0) {
+  mergePiece();
+  clearLines();
+  currentPiece = createPiece();
+  if (!isValidMove(currentPiece, currentPiece.x, currentPiece.y)) {
+   gameOver();
+  }
+ }
+}
+
+function gameOver() {
+ gameOverDisplay.style.display = 'block';
+ clearInterval(interval);
+}
+
+function restartGame() {
+ score = 0;
+ scoreDisplay.innerHTML = `Score: ${score}`;
+ board = Array.from({length: 20}, () => Array(10).fill(0));
+ currentPiece = createPiece();
+ drawPiece(currentPiece);
+ gameOverDisplay.style.display = 'none';
+ interval = setInterval(() => movePiece(0, 1), 500);
+}
+
+document.addEventListener('keydown', (e) => {
+ if (e.key === 'ArrowLeft') movePiece(-1, 0);
+ if (e.key === 'ArrowRight') movePiece(1, 0);
+ if (e.key === 'ArrowDown') movePiece(0, 3);
+ if (e.key === 'ArrowUp') rotatePiece(currentPiece);
+ if (e.key === 'r' || e.key === 'R') restartGame();
+});
+
+restartGame();
+</script>
+</body>
+</html>

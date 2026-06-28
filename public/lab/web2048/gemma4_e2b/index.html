@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Game</title>
+    <style>
+        /* --- CSS Styles --- */
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #faf8ef;
+            padding: 20px;
+            color: #776e60;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            color: #776e60;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-box {
+            text-align: center;
+        }
+
+        .score-box span {
+            display: block;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #8f7a66;
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        .control-btn:hover {
+            background-color: #776e60;
+        }
+
+        #undoBtn {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        #undoBtn:hover {
+            background-color: #e0a800;
+        }
+
+        /* --- Grid Styling --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            background-color: #bbada0;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .tile {
+            width: 100%;
+            padding-top: 100%; /* Makes the tile square */
+            position: relative;
+            background-color: #eee4da;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animation for merging - subtle scale/color change */
+        .tile.merging {
+            animation: merge 0.2s ease-in-out;
+        }
+
+        @keyframes merge {
+            0% { transform: scale(1); }
+            50% { background-color: #eee4da; }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Tile specific colors for better look */
+        .tile[data-value="2"] { background-color: #eee4da; }
+        .tile[data-value="4"] { background-color: #ede0c8; }
+        .tile[data-value="8"] { background-color: #f2b179; }
+        .tile[data-value="16"] { background-color: #f59563; }
+        .tile[data-value="32"] { background-color: #f67c5c; }
+        .tile[data-value="64"] { background-color: #f65e4b; }
+        .tile[data-value="128"] { background-color: #edc69e; }
+        .tile[data-value="256"] { background-color: #c7a86e; }
+        .tile[data-value="512"] { background-color: #a6c1e7; }
+
+        /* --- Game Over / Win Screens --- */
+        #gameOverScreen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(250, 248, 237, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameOverMessage {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 3px solid #f67c5c;
+        }
+
+        #gameOverMessage h2 {
+            margin-top: 0;
+            color: #f67c5c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>2048</h1>
+
+        <div class="score-board">
+            <div class="score-box">
+                <span id="currentScore">0</span>
+                <span id="bestScore">Best: 0</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="undoBtn" class="control-btn">Undo (U)</button>
+            <button id="restartBtn" class="control-btn">New Game</button>
+        </div>
+
+        <div class="grid" id="gameGrid">
+            <!-- Tiles will be injected here by JavaScript -->
+        </div>
+
+         <div id="gameOverScreen">
+            <div id="gameOverMessage">
+                <h2>Game Over!</h2>
+                <p>Your final score: <span id="finalScore">0</span></p>
+                <p id="winMessage"></p>
+                <button id="restartGameBtn" class="control-btn" style="margin-top: 20px;">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- JavaScript Logic ---
+
+        const GRID_SIZE = 4;
+        const gameGridElement = document.getElementById('gameGrid');
+        const scoreElement = document.getElementById('currentScore');
+        const bestScoreElement = document.getElementById('bestScore');
+        const undoBtn = document.getElementById('undoBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const winMessageElement = document.getElementById('winMessage');
+        const restartGameBtn = document.getElementById('restartGameBtn');
+
+        let board = [];
+        let isGameOver = false;
+        let lastMove = null;
+        let history = [];
+        let bestScore = 0;
+
+        // --- Persistence (localStorage) ---
+
+        function loadScores() {
+            const storedBest = localStorage.getItem('2048BestScore');
+            bestScore = storedBest ? parseInt(storedBest) : 0;
+            bestScoreElement.textContent = `Best: ${bestScore}`;
+        }
+
+        function saveScore(score) {
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('2048BestScore', score);
+                bestScoreElement.textContent = `Best: ${bestScore}`;
+            }
+        }
+
+        // --- Initialization ---
+
+        function initializeGame() {
+            board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            isGameOver = false;
+            history = [];
+            lastMove = null;
+
+            loadScores();
+            updateDisplay();
+
+            createGridVisuals();
+            spawnRandomTile();
+        }
+
+        function createGridVisuals() {
+            gameGridElement.innerHTML = '';
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.dataset.row = r;
+                    tile.dataset.col = c;
+                    tile.id = `tile-${r}-${c}`;
+                    tile.addEventListener('click', () => handleTileClick(r, c));
+                    gameGridElement.appendChild(tile);
+                }
+            }
+        }
+
+        function updateDisplay() {
+            // Update DOM elements
+            scoreElement.textContent = calculateScore();
+
+            // Update tile visuals
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const tileElement = document.getElementById(`tile-${r}-${c}`);
+                    const value = board[r][c];
+
+                    // Clear previous classes and set new value/style
+                    tileElement.textContent = value === 0 ? '' : value;
+                    tileElement.dataset.value = value;
+
+                    // Apply color based on value
+                    tileElement.style.backgroundColor = getColor(value);
+                }
+            }
+        }
+
+        // --- Game Logic ---
+
+        function getColor(value) {
+            if (value === 0) return '#eee4da'; // Empty background
+            if (value === 2) return '#eee4da';
+            if (value === 4) return '#ede0c8';
+            if (value === 8) return '#f2b179';
+            if (value === 16) return '#f59563';
+            if (value === 32) return '#f67c5c';
+            if (value === 64) return '#f65e4b';
+            if (value === 128) return '#edc69e';
+            if (value === 256) return '#c7a86e';
+            if (value === 512) return '#a6c1e7';
+            return '#ffffff'; // Fallback
+        }
+
+        function calculateScore() {
+            let score = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    score += board[r][c] * board[r][c];
+                }
+            }
+            return score;
+        }
+
+        function checkGameOver() {
+            // Check if any moves are possible
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c] !== 0) {
+                        checkIfMergePossible(r, c);
+                    }
+                }
+            }
+
+            // Check for win condition (2048)
+            let has2048 = false;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c] === 2048) {
+                        has2048 = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!has2048) {
+                isGameOver = true;
+                endGame(false); // Game Over: Loss
+            } else {
+                isGameOver = false;
+                endGame(true); // Win condition met
+            }
+        }
+
+        function checkIfMergePossible(r, c) {
+            const val = board[r][c];
+            if (val === 0) return false;
+
+            // Check right
+            if (c < GRID_SIZE - 1 && board[r][c + 1] === val) return true;
+            // Check down
+            if (r < GRID_SIZE - 1 && board[r + 1][c] === val) return true;
+
+            return false;
+        }
+
+        function spawnRandomTile() {
+            const emptyCells = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c] === 0) {
+                        emptyCells.push({r, c});
+                    }
+                }
+            }
+
+            if (emptyCells.length === 0) return;
+
+            const emptyIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            const r = emptyIndex.r;
+            const c = emptyIndex.c;
+
+            // 90% chance for 2, 10% chance for 4
+            const newValue = Math.random() < 0.9 ? 2 : 4;
+            board[r][c] = newValue;
+
+            console.log(`Spawned ${newValue} at (${r}, ${c})`);
+
+            // Check for game over immediately after spawn
+            checkGameOver();
+        }
+
+        // --- Move Handling ---
+
+        function performMove(direction) {
+            if (isGameOver) return;
+
+            let moveMade = false;
+            let movesPerformed = 0; // Counter for merges in this move
+
+            // 1. Store state before move for undo
+            if (lastMove !== null) {
+                history.push({ board: JSON.parse(JSON.stringify(board)), score: calculateScore() });
+            }
+
+            let newBoard = JSON.parse(JSON.stringify(board));
+            let move_data = null; // To store exactly what happened for undo
+
+            // 2. Execute the slide and merge logic
+            if (direction === 'left' || direction === 'right') {
+                newBoard = slideAndMergeHorizontal(newBoard, direction);
+            } else if (direction === 'up' || direction === 'down') {
+                newBoard = slideAndMergeVertical(newBoard, direction);
+            }
+
+            // Check if the board actually changed
+            if (JSON.stringify(newBoard) !== JSON.stringify(board)) {
+                board = newBoard;
+                moveMade = true;
+
+                // 3. Apply the move to history
+                history.push({ board: JSON.parse(JSON.stringify(board)), score: calculateScore() });
+                lastMove = direction;
+
+                // 4. Spawn new tile IF a move was made
+                if (moveMade) {
+                    spawnRandomTile();
+                }
+            } else {
+                // If no move was made (e.g., tried to move left on an empty board)
+                // We still need to record the state if it was a valid click, but for strict
+                // undo, we only push on actual changes.
+                // However, if a click happens, we should record it for undo if the board state is preserved.
+                // For this complex requirement, we only record moves that result in a change.
+                // If the move was invalid, we do nothing to history.
+            }
+
+            // 5. Update UI and check game state
+            updateDisplay();
+            checkGameOver();
+        }
+
+        function slideAndMergeHorizontal(currentBoard, direction) {
+            const newBoard = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            const matched = Array(GRID_SIZE).fill(false);
+            let merged = false;
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                let arr = currentBoard[r].filter(v => v !== 0);
+
+                // --- Slide ---
+                if (direction === 'right') {
+                    arr.sort((a, b) => a - b);
+                } else { // left
+                    arr.sort((a, b) => b - a); // Sort descending for left move
+                }
+
+                // --- Merge ---
+                let i = 0;
+                while (i < arr.length - 1) {
+                    if (arr[i] === arr[i + 1]) {
+                        const mergedVal = arr[i] * 2;
+                        arr[i] = mergedVal;
+                        arr.splice(i + 1, 1);
+                        merged = true;
+                        i--; // Recheck the new merged tile
+                    }
+                    i++;
+                }
+
+                // --- Pad and Place ---
+                const newRow = Array(GRID_SIZE).fill(0);
+                let fillIndex = 0;
+
+                if (direction === 'right') {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        if (fillIndex < GRID_SIZE) {
+                            newRow[j] = arr[fillIndex];
+                            fillIndex++;
+                        }
+                    }
+                } else { // left
+                     for (let j = 0; j < GRID_SIZE; j++) {
+                        if (fillIndex < GRID_SIZE) {
+                            newRow[j] = arr[fillIndex];
+                            fillIndex++;
+                        }
+                    }
+                }
+
+                newBoard[r] = newRow;
+            }
+            return newBoard;
+        }
+
+        function slideAndMergeVertical(currentBoard, direction) {
+            const newBoard = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            const matched = Array(GRID_SIZE).fill(false);
+            let merged = false;
+
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let arr = [];
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    arr.push(currentBoard[r][c]);
+                }
+
+                // --- Slide ---
+                if (direction === 'down') {
+                    arr.sort((a, b) => a - b);
+                } else { // up
+                    arr.sort((a, b) => b - a); // Sort descending for up move
+                }
+
+                // --- Merge ---
+                let i = 0;
+                while (i < arr.length - 1) {
+                    if (arr[i] === arr[i + 1]) {
+                        const mergedVal = arr[i] * 2;
+                        arr[i] = mergedVal;
+                        arr.splice(i + 1, 1);
+                        merged = true;
+                        i--;
+                    }
+                    i++;
+                }
+
+                // --- Pad and Place ---
+                const newCol = Array(GRID_SIZE).fill(0);
+                let fillIndex = 0;
+
+                if (direction === 'down') {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        if (fillIndex < GRID_SIZE) {
+                            newCol[j] = arr[fillIndex];
+                            fillIndex++;
+                        }
+                    }
+                } else { // up
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        if (fillIndex < GRID_SIZE) {
+                            newCol[j] = arr[fillIndex];
+                            fillIndex++;
+                        }
+                    }
+                }
+
+                for(let r=0; r<GRID_SIZE; r++) {
+                    newBoard[r][c] = newCol[r];
+                }
+            }
+            return newBoard;
+        }
+
+        function handleTileClick(r, c) {
+            if (isGameOver) return;
+
+            const originalBoard = JSON.parse(JSON.stringify(board));
+
+            // 1. Determine direction based on click position relative to neighbors
+            let direction = '';
+            const neighbors = [
+                { dr: -1, dc: 0, dir: 'up' },
+                { dr: 1, dc: 0, dir: 'down' },
+                { dr: 0, dc: -1, dir: 'left' },
+                { dr: 0, dc: 1, dir: 'right' },
+            ];
+
+            // Determine which direction is most likely to be the intended move based on the tile being clicked and its neighbors
+
+            // Check if it's a slide move (i.e., a tile is adjacent)
+            let slideDirection = '';
+
+            // Check neighbors to see if a slide is possible
+            if (r > 0 && board[r - 1][c] === board[r][c]) slideDirection += 'up';
+            if (r < GRID_SIZE - 1 && board[r + 1][c] === board[r][c]) slideDirection += 'down';
+            if (c > 0 && board[r][c - 1] === board[r][c]) slideDirection += 'left';
+            if (c < GRID_SIZE - 1 && board[r][c + 1] === board[r][c]) slideDirection += 'right';
+
+            if (slideDirection.length > 0) {
+                direction = slideDirection.trim();
+            } else {
+                // If no slide move is immediately obvious, assume we try to play a fixed direction
+                // This is the tricky part for 2048. We need to detect if a direction is intended.
+                // Since input is via UI clicks, we need to check the actual move direction based on a chosen direction (e.g., from arrow keys).
+                // For click-based play, we only allow moves based on adjacent tiles meeting conditions.
+                // Let's simplify: clicks are only valid if they initiate a slide that results in a change.
+
+                // To satisfy the "arrow keys slide all tiles" requirement, the click handler should rely on the arrow input, not just the click location.
+                // For a click implementation, we will check all 4 directions from the clicked tile.
+
+                // If we must operate on a click, we let the move logic handle the direction implicitly defined by the successful merge/slide.
+                // Since the prompt implies arrow keys drive the main interaction, we will focus the click handler on triggering the movement logic based on the direction *implicitly* chosen.
+                // Given the constraint, the simplest interpretation is: a click on a tile implies the user intends to slide that tile.
+
+                // Let's revert handleTileClick to trigger the main 'performMove' with specific directions based on the clicked tile's position if it has a neighbor that needs sliding.
+                // For simplicity matching the requirement: we will only trigger a move if it's a valid slide direction based on the position.
+            }
+
+            // Since the requirement focuses on arrow keys driving the move, we will ignore direct clicks for actual movement, and only allow keyboard input.
+            // We will hook the keyboard listener below to handle the actual moves.
+        }
+
+
+        function handleKeyPress(event) {
+            if (isGameOver) return;
+
+            let direction = '';
+            switch (event.key) {
+                case 'ArrowUp':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                    direction = 'right';
+                    break;
+                case 'u': // Undo
+                    if (history.length > 0) {
+                        undoLastMove();
+                    }
+                    return;
+                default:
+                    return;
+            }
+
+            event.preventDefault();
+
+            // Save state before attempting the move
+            const originalState = JSON.parse(JSON.stringify(board));
+
+            // Attempt the move
+            performMove(direction);
+
+            // If the move was actually made (i.e., it wasn't an invalid move attempt against the board state)
+            if (lastMove === direction) {
+                // If a move occurred, it's already handled in performMove, including history update and spawn.
+            } else if (originalState !== board) {
+                // If the move was attempted but resulted in no change (e.g., moving right on an empty board), we don't add to history.
+            }
+        }
+
+        function undoLastMove() {
+            if (history.length === 0) return;
+
+            // Pop the most recent state
+            const lastState = history.pop();
+            board = JSON.parse(JSON.stringify(lastState.board));
+
+            // Re-calculate score
+            const newScore = calculateScore();
+
+            // Update history (only keep states that lead to a state that has history)
+            // We keep the history states that precede the current reversed state.
+            // Since we are rolling back, we don't need to add the reversed state back to history,
+            // as the state before the reversed one is already in history.
+
+            // Re-save the current state as the new "last move" context for future potential undo
+            lastMove = null; // Undo resets the active move state
+
+            updateDisplay();
+
+            // Re-check game state based on the undone board
+            checkGameOver();
+        }
+
+        function endGame(won) {
+            isGameOver = true;
+            gameOverScreen.style.display = 'flex';
+            finalScoreElement.textContent = calculateScore();
+
+            if (won) {
+                 winMessageElement.textContent = "Congratulations! You reached 2048!";
+            } else {
+                 winMessageElement.textContent = "Game Over. You cannot make any more moves.";
+            }
+
+            // Save Score
+            saveScore(calculateScore());
+
+            // Disable further input/interaction
+            document.removeEventListener('keydown', handleKeyPress);
+        }
+
+        // --- Event Listeners ---
+
+        document.addEventListener('keydown', handleKeyPress);
+        restartBtn.addEventListener('click', () => {
+            initializeGame();
+            document.addEventListener('keydown', handleKeyPress);
+        });
+        undoBtn.addEventListener('click', undoLastMove);
+
+
+        // --- Start Game ---
+        initializeGame();
+        // Ensure the initial state is loaded and the screen is ready for input
+        console.log("2048 Game Initialized. Ready for input via arrow keys.");
+
+    </script>
+</body>
+</html>

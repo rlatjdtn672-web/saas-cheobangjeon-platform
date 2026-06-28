@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossy Hopper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a2e;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #0f3460;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        #score {
+            margin-bottom: 10px;
+        }
+
+        #bestScore {
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: #fff;
+            text-align: center;
+        }
+
+        #gameOverText {
+            font-size: 72px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        #finalScore {
+            font-size: 40px;
+            margin-bottom: 50px;
+            color: #ffaa00;
+        }
+
+        #restartButton {
+            padding: 15px 50px;
+            font-size: 24px;
+            background: #00aa00;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 25px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        #restartButton:hover {
+            background: #00dd00;
+        }
+
+        #restartInstruction {
+            font-size: 18px;
+            color: #aaa;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="score">Score: 0</div>
+            <div id="bestScore">Best: 0</div>
+        </div>
+        <div id="gameOverScreen">
+            <div id="gameOverText">GAME OVER</div>
+            <div id="finalScore">Score: 0</div>
+            <button id="restartButton">Restart (R)</button>
+            <div id="restartInstruction">Press R or click Restart</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.tabIndex = 1;
+        canvas.focus();
+
+        // Game constants
+        const GRID_SIZE = 40;
+        const LANE_HEIGHT = GRID_SIZE;
+        const PLAYER_SIZE = GRID_SIZE - 8;
+        const PLAYER_MOVE_DELAY = 120;
+        const GRID_WIDTH = Math.floor(canvas.width / GRID_SIZE);
+        const GRID_HEIGHT = Math.floor(canvas.height / LANE_HEIGHT);
+
+        let gameState = initGame();
+
+        function initGame() {
+            return {
+                playerGridX: Math.floor(GRID_WIDTH / 2),
+                playerGridY: 0,
+                playerCarriedByLog: null,
+                score: 0,
+                bestScore: parseInt(localStorage.getItem('bestScore')) || 0,
+                gameOver: false,
+                cameraLaneY: 0,
+                lastMoveTime: 0,
+                lanes: [],
+                vehicles: [],
+                logs: [],
+                frameCount: 0
+            };
+        }
+
+        function createLane(laneWorldY) {
+            const random = Math.random();
+            const lane = { laneWorldY };
+
+            if (random < 0.35) {
+                lane.type = 'road';
+                lane.direction = Math.random() > 0.5 ? 1 : -1;
+                lane.speed = 2 + Math.random() * 2.5;
+            } else if (random < 0.65) {
+                lane.type = 'river';
+                lane.direction = Math.random() > 0.5 ? 1 : -1;
+                lane.speed = 1.5 + Math.random() * 1.5;
+            } else {
+                lane.type = 'grass';
+            }
+
+            return lane;
+        }
+
+        function updateVehicles() {
+            // Update positions
+            gameState.vehicles.forEach(v => {
+                v.pixelX += v.speed * v.direction;
+            });
+
+            // Remove off-screen vehicles
+            gameState.vehicles = gameState.vehicles.filter(v => {
+                return v.pixelX < canvas.width + 100 && v.pixelX > -100;
+            });
+
+            // Spawn new vehicles on road lanes
+            gameState.lanes.forEach((lane, laneIdx) => {
+                if (lane.type !== 'road') return;
+                const vehiclesOnLane = gameState.vehicles.filter(v => v.laneIdx === laneIdx).length;
+
+                if (vehiclesOnLane < 2 && Math.random() < 0.06) {
+                    const startX = lane.direction > 0 ? -70 : canvas.width + 70;
+                    gameState.vehicles.push({
+                        pixelX: startX,
+                        laneIdx: laneIdx,
+                        width: 50 + Math.random() * 25,
+                        height: GRID_SIZE - 8,
+                        speed: lane.speed,
+                        direction: lane.direction,
+                        color: `hsl(${20 + Math.random() * 40}, 80%, 50%)`
+                    });
+                }
+            });
+        }
+
+        function updateLogs() {
+            // Update positions and handle player carrying
+            gameState.logs.forEach(log => {
+                const prevX = log.pixelX;
+                log.pixelX += log.speed * log.direction;
+
+                if (gameState.playerCarriedByLog === log) {
+                    const delta = log.pixelX - prevX;
+                    gameState.playerGridX += delta / GRID_SIZE;
+                }
+            });
+
+            // Remove off-screen logs
+            gameState.logs = gameState.logs.filter(log => {
+                if (gameState.playerCarriedByLog === log) return true;
+                return log.pixelX < canvas.width + 100 && log.pixelX > -100;
+            });
+
+            // Spawn new logs on river lanes
+            gameState.lanes.forEach((lane, laneIdx) => {
+                if (lane.type !== 'river') return;
+                const logsOnLane = gameState.logs.filter(l => l.laneIdx === laneIdx).length;
+
+                if (logsOnLane < 2 && Math.random() < 0.05) {
+                    const startX = lane.direction > 0 ? -80 : canvas.width + 80;
+                    gameState.logs.push({
+                        pixelX: startX,
+                        laneIdx: laneIdx,
+                        width: 70,
+                        height: GRID_SIZE - 12,
+                        speed: lane.speed,
+                        direction: lane.direction
+                    });
+                }
+            });
+        }
+
+        function checkCollisions() {
+            const playerLaneIdx = Math.floor(gameState.playerGridY);
+            if (playerLaneIdx < 0 || playerLaneIdx >= gameState.lanes.length) return false;
+
+            const lane = gameState.lanes[playerLaneIdx];
+            const playerPixelX = gameState.playerGridX * GRID_SIZE + (GRID_SIZE - PLAYER_SIZE) / 2;
+            const playerPixelY = playerLaneIdx * LANE_HEIGHT + (GRID_SIZE - PLAYER_SIZE) / 2;
+
+            if (lane.type === 'road') {
+                for (let vehicle of gameState.vehicles) {
+                    if (vehicle.laneIdx !== playerLaneIdx) continue;
+                    const vehiclePixelY = playerLaneIdx * LANE_HEIGHT + (LANE_HEIGHT - vehicle.height) / 2;
+
+                    if (playerPixelX < vehicle.pixelX + vehicle.width &&
+                        playerPixelX + PLAYER_SIZE > vehicle.pixelX &&
+                        playerPixelY < vehiclePixelY + vehicle.height &&
+                        playerPixelY + PLAYER_SIZE > vehiclePixelY) {
+                        return true;
+                    }
+                }
+            } else if (lane.type === 'river') {
+                let onLog = false;
+                gameState.playerCarriedByLog = null;
+
+                for (let log of gameState.logs) {
+                    if (log.laneIdx !== playerLaneIdx) continue;
+                    const logPixelY = playerLaneIdx * LANE_HEIGHT + (LANE_HEIGHT - log.height) / 2;
+
+                    if (playerPixelX < log.pixelX + log.width &&
+                        playerPixelX + PLAYER_SIZE > log.pixelX &&
+                        playerPixelY < logPixelY + log.height &&
+                        playerPixelY + PLAYER_SIZE > logPixelY) {
+                        onLog = true;
+                        gameState.playerCarriedByLog = log;
+                        break;
+                    }
+                }
+
+                if (!onLog) return true;
+            }
+
+            return false;
+        }
+
+        function update() {
+            // Generate lanes ahead
+            while (gameState.lanes.length < gameState.playerGridY + GRID_HEIGHT + 10) {
+                gameState.lanes.push(createLane(gameState.lanes.length));
+            }
+
+            // Update camera to follow player
+            gameState.cameraLaneY = Math.max(0, gameState.playerGridY - Math.floor(GRID_HEIGHT / 3));
+
+            // Check if player fell off bottom
+            if (gameState.playerGridY < gameState.cameraLaneY - 2) {
+                gameState.gameOver = true;
+            }
+
+            // Check grid bounds for left/right
+            gameState.playerGridX = Math.max(0, Math.min(GRID_WIDTH - 1, gameState.playerGridX));
+
+            // Update entities
+            updateVehicles();
+            updateLogs();
+
+            // Check collisions
+            if (checkCollisions()) {
+                gameState.gameOver = true;
+            }
+
+            // Update score
+            gameState.score = Math.max(gameState.score, gameState.playerGridY);
+        }
+
+        function render() {
+            ctx.fillStyle = '#0f3460';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw lanes
+            for (let laneIdx = 0; laneIdx < gameState.lanes.length; laneIdx++) {
+                const lane = gameState.lanes[laneIdx];
+                const screenY = (laneIdx - gameState.cameraLaneY) * LANE_HEIGHT;
+
+                if (screenY < -LANE_HEIGHT || screenY > canvas.height) continue;
+
+                if (lane.type === 'grass') {
+                    ctx.fillStyle = '#2d5016';
+                    ctx.fillRect(0, screenY, canvas.width, LANE_HEIGHT);
+                    // Grass texture
+                    ctx.fillStyle = 'rgba(100, 150, 60, 0.3)';
+                    for (let x = 0; x < canvas.width; x += 15) {
+                        ctx.fillRect(x + (gameState.frameCount % 15), screenY, 8, LANE_HEIGHT);
+                    }
+                } else if (lane.type === 'road') {
+                    ctx.fillStyle = '#3a3a3a';
+                    ctx.fillRect(0, screenY, canvas.width, LANE_HEIGHT);
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([20, 20]);
+                    ctx.beginPath();
+                    ctx.moveTo(0, screenY + LANE_HEIGHT / 2);
+                    ctx.lineTo(canvas.width, screenY + LANE_HEIGHT / 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                } else if (lane.type === 'river') {
+                    ctx.fillStyle = '#1e90ff';
+                    ctx.fillRect(0, screenY, canvas.width, LANE_HEIGHT);
+                    ctx.fillStyle = 'rgba(100, 200, 255, 0.4)';
+                    for (let x = 0; x < canvas.width; x += 25) {
+                        ctx.fillRect(x + (gameState.frameCount % 25), screenY, 12, LANE_HEIGHT);
+                    }
+                }
+            }
+
+            // Draw vehicles
+            gameState.vehicles.forEach(vehicle => {
+                const screenY = (vehicle.laneIdx - gameState.cameraLaneY) * LANE_HEIGHT + (LANE_HEIGHT - vehicle.height) / 2;
+                ctx.fillStyle = vehicle.color;
+                ctx.fillRect(vehicle.pixelX, screenY, vehicle.width, vehicle.height);
+                ctx.fillStyle = '#333';
+                ctx.fillRect(vehicle.pixelX + 5, screenY + 3, 7, 7);
+            });
+
+            // Draw logs
+            gameState.logs.forEach(log => {
+                const screenY = (log.laneIdx - gameState.cameraLaneY) * LANE_HEIGHT + (LANE_HEIGHT - log.height) / 2;
+                ctx.fillStyle = '#8B6F47';
+                ctx.fillRect(log.pixelX, screenY, log.width, log.height);
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(log.pixelX, screenY + i * (log.height / 2) + 8);
+                    ctx.lineTo(log.pixelX + log.width, screenY + i * (log.height / 2) + 8);
+                    ctx.stroke();
+                }
+            });
+
+            // Draw player
+            const playerScreenY = (gameState.playerGridY - gameState.cameraLaneY) * LANE_HEIGHT + (GRID_SIZE - PLAYER_SIZE) / 2;
+            const playerScreenX = gameState.playerGridX * GRID_SIZE + (GRID_SIZE - PLAYER_SIZE) / 2;
+
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(playerScreenX + PLAYER_SIZE / 2, playerScreenY + PLAYER_SIZE / 2, PLAYER_SIZE / 2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(playerScreenX + 6, playerScreenY + 6, 6, 6);
+            ctx.fillRect(playerScreenX + PLAYER_SIZE - 12, playerScreenY + 6, 6, 6);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(playerScreenX + 7, playerScreenY + 7, 4, 4);
+            ctx.fillRect(playerScreenX + PLAYER_SIZE - 11, playerScreenY + 7, 4, 4);
+        }
+
+        function handleInput(e) {
+            if (gameState.gameOver) {
+                if (e.key.toLowerCase() === 'r' || e.key === 'R') {
+                    restartGame();
+                }
+                return;
+            }
+
+            const now = Date.now();
+            if (now - gameState.lastMoveTime < PLAYER_MOVE_DELAY) return;
+
+            let moved = false;
+            const key = e.key.toLowerCase();
+
+            if (key === 'arrowup' || key === 'w') {
+                gameState.playerGridY++;
+                gameState.playerCarriedByLog = null;
+                moved = true;
+            } else if (key === 'arrowdown' || key === 's') {
+                gameState.playerGridY = Math.max(0, gameState.playerGridY - 1);
+                gameState.playerCarriedByLog = null;
+                moved = true;
+            } else if (key === 'arrowleft' || key === 'a') {
+                gameState.playerGridX--;
+                moved = true;
+            } else if (key === 'arrowright' || key === 'd') {
+                gameState.playerGridX++;
+                moved = true;
+            }
+
+            if (moved) {
+                gameState.lastMoveTime = now;
+                e.preventDefault();
+            }
+        }
+
+        function gameLoop() {
+            gameState.frameCount++;
+            update();
+            render();
+
+            if (!gameState.gameOver) {
+                requestAnimationFrame(gameLoop);
+            } else {
+                showGameOver();
+            }
+        }
+
+        function showGameOver() {
+            const screen = document.getElementById('gameOverScreen');
+            document.getElementById('finalScore').textContent = `Score: ${gameState.score}`;
+
+            if (gameState.score > gameState.bestScore) {
+                gameState.bestScore = gameState.score;
+                localStorage.setItem('bestScore', gameState.bestScore);
+                document.getElementById('bestScore').textContent = `Best: ${gameState.bestScore}`;
+            }
+
+            screen.style.display = 'flex';
+        }
+
+        function restartGame() {
+            gameState = initGame();
+            gameState.bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
+            document.getElementById('score').textContent = 'Score: 0';
+            document.getElementById('bestScore').textContent = `Best: ${gameState.bestScore}`;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            canvas.focus();
+            gameLoop();
+        }
+
+        document.addEventListener('keydown', handleInput);
+        document.getElementById('restartButton').addEventListener('click', restartGame);
+        canvas.addEventListener('click', () => canvas.focus());
+
+        gameLoop();
+    </script>
+</body>
+</html>

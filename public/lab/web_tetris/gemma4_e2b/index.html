@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanilla Tetris</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #222;
+            color: #eee;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            display: flex;
+            gap: 20px;
+        }
+        #tetris-canvas {
+            border: 3px solid #555;
+            background-color: #000;
+        }
+        #score-board {
+            padding: 10px;
+            border: 1px solid #555;
+            background-color: #333;
+        }
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border: 5px solid red;
+            text-align: center;
+            z-index: 100;
+        }
+        #game-over-screen button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Vanilla Tetris</h1>
+
+    <div id="game-container">
+        <canvas id="tetris-canvas" width="240" height="400"></canvas>
+        <div id="score-board">
+            <h2>Score: <span id="score">0</span></h2>
+            <p>Controls:</p>
+            <ul>
+                <li>← / → : Move</li>
+                <li>↓ : Soft Drop</li>
+                <li>↑ : Rotate</li>
+                <li>R : Restart</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="game-over-screen">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button onclick="startGame()">Restart Game</button>
+    </div>
+
+    <script>
+        // --- Game Constants ---
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 24; // 24px per block
+        const CANVAS_WIDTH = COLS * BLOCK_SIZE;
+        const CANVAS_HEIGHT = ROWS * BLOCK_SIZE;
+
+        // --- Canvas Setup ---
+        const canvas = document.getElementById('tetris-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreElement = document.getElementById('final-score');
+
+        let score = 0;
+        let gameLoopInterval;
+        let isGameOver = false;
+
+        // --- Tetromino Definitions ---
+        // Define the 7 standard shapes and their colors
+        const TETROMINOES = [
+            // I
+            { shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], color: '#00FFFF' }, // Cyan
+            // J
+            { shape: [[1, 0, 0], [1, 1, 1], [0, 0, 0]], color: '#0000FF' }, // Blue
+            // L
+            { shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]], color: '#FFA500' }, // Orange
+            // O
+            { shape: [[1, 1], [1, 1]], color: '#FFFF00' }, // Yellow
+            // S
+            { shape: [[0, 1, 1], [1, 1, 0], [0, 0, 0]], color: '#00FF00' }, // Green
+            // T
+            { shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]], color: '#800080' }, // Purple
+            // Z
+            { shape: [[1, 1, 0], [0, 1, 1], [0, 0, 0]], color: '#FF0000' }  // Red
+        ];
+
+        // --- Game State Variables ---
+        let currentPiece;
+        let currentX;
+        let currentY;
+        let gameBoard = createEmptyBoard();
+
+        // --- Core Functions ---
+
+        /**
+         * Creates an empty game board (2D array filled with 0s)
+         */
+        function createEmptyBoard() {
+            return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        }
+
+        /**
+         * Creates a new random tetromino
+         */
+        function randomPiece() {
+            const randomIndex = Math.floor(Math.random() * TETROMINOES.length);
+            const pieceData = TETROMINOES[randomIndex];
+            return {
+                shape: pieceData.shape,
+                color: pieceData.color
+            };
+        }
+
+        /**
+         * Initializes a new piece at the top center of the board
+         */
+        function spawnNewPiece() {
+            currentPiece = randomPiece();
+            currentX = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2);
+            currentY = 0;
+
+            // Check for immediate game over upon spawning
+            if (!isValidMove(currentPiece.shape, currentX, currentY)) {
+                gameOver();
+                return;
+            }
+        }
+
+        /**
+         * Checks if a piece can be placed at the given position
+         */
+        function isValidMove(shape, x, y) {
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (shape[r][c] !== 0) {
+                        const newY = y + r;
+                        const newX = x + c;
+
+                        // Check boundaries
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
+                            return false;
+                        }
+                        // Check collision with existing blocks (must be within board boundaries)
+                        if (newY >= 0 && gameBoard[newY] && gameBoard[newY][newX] !== 0) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Draws a single shape onto the game board (or the canvas)
+         */
+        function draw() {
+            // 1. Clear the canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // 2. Draw the fixed blocks on the grid (if any)
+            drawBoard();
+
+            // 3. Draw the current falling piece
+            if (currentPiece) {
+                ctx.fillStyle = currentPiece.color;
+                currentPiece.shape.forEach((row, r) => {
+                    row.forEach((value, c) => {
+                        if (value) {
+                            const boardX = currentX + c;
+                            const boardY = currentY + r;
+                            // Draw the block onto the canvas
+                            ctx.fillRect(boardX * BLOCK_SIZE, boardY * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                            ctx.strokeStyle = '#fff';
+                            ctx.strokeRect(boardX * BLOCK_SIZE, boardY * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        }
+                    });
+                });
+            }
+        }
+
+        /**
+         * Draws the static blocks from the gameBoard array onto the canvas
+         */
+        function drawBoard() {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gameBoard[r][c] !== 0) {
+                        ctx.fillStyle = gameBoard[r][c].color;
+                        ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.strokeStyle = '#333';
+                        ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Locks the current piece into the board and handles line clearing
+         */
+        function lockPiece() {
+            currentPiece.shape.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    if (value) {
+                        const boardY = currentY + r;
+                        const boardX = currentX + c;
+                        // Mark the piece location on the permanent board
+                        gameBoard[boardY][boardX] = { color: currentPiece.color };
+                    }
+                });
+            });
+
+            clearLines();
+            spawnNewPiece();
+        }
+
+        /**
+         * Clears full lines and updates the score
+         */
+        function clearLines() {
+            let linesCleared = 0;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                // Check if the row is completely filled (no zeros)
+                if (gameBoard[r].every(cell => cell !== 0)) {
+                    linesCleared++;
+
+                    // Remove the row
+                    gameBoard.splice(r, 1);
+
+                    // Add a new empty row at the top
+                    gameBoard.unshift(Array(COLS).fill(0));
+
+                    // Re-check the same index since the board shifted
+                    r--;
+                }
+            }
+
+            if (linesCleared > 0) {
+                // Simple scoring: 100 points per line
+                score += linesCleared * 100;
+                scoreElement.textContent = score;
+            }
+        }
+
+        /**
+         * Handles game over condition
+         */
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(gameLoopInterval);
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'block';
+        }
+
+        /**
+         * Main game loop runner
+         */
+        function gameLoop() {
+            if (isGameOver) return;
+
+            // 1. Attempt to move the piece down
+            if (isValidMove(currentPiece.shape, currentX, currentY + 1)) {
+                currentY++;
+            } else {
+                // Lock the piece if it hits the bottom
+                lockPiece();
+            }
+
+            // 2. Redraw the screen
+            draw();
+        }
+
+        // --- Input Handlers ---
+
+        /**
+         * Handles piece rotation
+         */
+        function rotatePiece() {
+            if (isGameOver) return;
+            const originalShape = currentPiece.shape;
+            const N = originalShape.length;
+            let newShape = Array.from({ length: N }, () => Array(N).fill(0));
+
+            // Transpose and reverse rows for 90-degree clockwise rotation
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    newShape[c][N - 1 - r] = originalShape[r][c];
+                }
+            }
+
+            // Simple reversal for 90-degree clockwise rotation (adjusting coordinates to keep it centered rotationally)
+            // For simple Tetris rotations, we need to transpose and flip.
+            // Let's use a simpler rotation method for block matrices.
+
+            // Standard matrix rotation (Transpose + Reverse Columns)
+            let rotatedShape = Array.from({ length: N }, () => Array(N).fill(0));
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    rotatedShape[c][N - 1 - r] = originalShape[r][c];
+                }
+            }
+
+            // The actual standard rotation for the specific block orientation might need minor adjustment depending on how the piece is placed.
+            // For simplicity and avoiding complex matrix math here, we will use a simplified rotation logic which works for testing placement constraints.
+            // A rotation test: if the rotation is invalid, the system remains unchanged.
+
+            // A more accurate rotation for Tetrominos involves specific pattern manipulation.
+            // We will use a standard mathematical rotation: (r, c) -> (c, N-1-r)
+            let tempShape = Array.from({ length: N }, () => Array(N).fill(0));
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    tempShape[c][N - 1 - r] = originalShape[r][c];
+                }
+            }
+
+            // We must ensure the new piece stays within bounds before moving it.
+            if (isValidMove(tempShape, currentX, currentY)) {
+                currentPiece.shape = tempShape;
+            }
+        }
+
+        /**
+         * Handles movement (Left, Right, Soft Drop, Hard Drop)
+         */
+        function movePiece(dir) {
+            if (isGameOver) return;
+            let newX = currentX;
+            let newY = currentY;
+
+            switch (dir) {
+                case 'left':
+                    newX--;
+                    break;
+                case 'right':
+                    newX++;
+                    break;
+                case 'down':
+                    newY++;
+                    // Soft drop can immediately lock if possible, but the main loop handles locking after a check.
+                    break;
+                case 'up':
+                    // Rotation is handled separately
+                    return;
+            }
+
+            if (isValidMove(currentPiece.shape, newX, newY)) {
+                currentX = newX;
+                currentY = newY;
+            }
+        }
+
+        // --- Event Listeners Setup ---
+
+        document.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    movePiece('left');
+                    break;
+                case 'ArrowRight':
+                    movePiece('right');
+                    break;
+                case 'ArrowDown':
+                    // Soft drop: attempt to move down immediately
+                    movePiece('down');
+                    break;
+                case 'ArrowUp':
+                    rotatePiece();
+                    break;
+                case 'r':
+                    // Restart game
+                    if (confirm("Are you sure you want to restart the game?")) {
+                        startGame();
+                    }
+                    break;
+            }
+        });
+
+        /**
+         * Initializes or restarts the game state
+         */
+        function startGame() {
+            // Reset State
+            score = 0;
+            isGameOver = false;
+            gameBoard = createEmptyBoard();
+            scoreElement.textContent = score;
+            gameOverScreen.style.display = 'none';
+
+            // Initialize first piece
+            spawnNewPiece();
+
+            // Start Game Loop (falls every 500ms)
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
+            gameLoopInterval = setInterval(gameLoop, 500);
+        }
+
+        // --- Initialization ---
+        startGame(); // Start the game when the page loads
+    </script>
+</body>
+</html>

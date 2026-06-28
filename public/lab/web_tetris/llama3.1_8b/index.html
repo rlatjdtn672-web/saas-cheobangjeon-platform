@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <style>
+        /* basic styles */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #game-board {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            margin: auto;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        
+        /* game grid */
+        .cell {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            display: inline-block;
+            vertical-align: top;
+            line-height: 20px;
+            margin-left: -200px;
+            text-align: center;
+        }
+        
+        /* piece styles */
+        .square {
+            background-color: #000;
+            border-radius: 10%;
+            width: 30px;
+            height: 30px;
+            position: absolute;
+        }
+        
+    </style>
+</head>
+
+<body>
+<h2 id="score">Score: 0</h2>
+<div id="game-board" tabindex="1"></div>
+<script>
+document.getElementById("game-board").focus();
+
+const tetrominos = [
+    [[0, 0], [0, 1], [1, 1], [2, 1]],
+    [[1, 0], [1, 1], [1, 2], [1, 3]],
+    [[0, 0], [1, 0], [1, 1], [2, 1]],
+    [[2, 0], [2, 1], [1, 1], [0, 1]],
+    [[0, 1], [0, 2], [1, 2], [2, 2]],
+    [[0, 0], [1, 0], [2, 0], [0, -1]],
+    [[1, 1], [1, 2], [0, 3], [2, 0]]
+];
+
+let score = 0;
+let linesCleared = 0;
+
+// color array for random selection of piece colors
+const colorArray = ["red", "orange", "yellow", "green", "blue", "magenta"];
+
+function clearLine(line) {
+    let cells = document.querySelectorAll(".cell");
+    cells.forEach(cell => cell.remove());
+}
+
+let linesCount = 6;
+let grid = [];
+for (let i=0; i < linesCount; i++) {
+    grid.push(["."].concat(Array(10).fill(".")));
+    document.getElementById("game-board").innerHTML += "<div class='cell'>".concat(grid[i].join("</div><div class='cell'>") + "</div>").format(".format());
+}
+
+function drawPiece(pos, piece) {
+    let x = pos[0];
+    let y = pos[1];
+    for (let i=0; i < tetrominos[piece][y].length; i++) {
+        let row = grid[x + tetrominos[piece][y][i][0]];
+        if(row === undefined) row = ["."].concat(Array(10).fill("."));
+        let xIndex = tetrominos[piece][y][i][1];
+        row[tetrominos[piece][y][i][1]] = colorArray[piece];
+
+        document.getElementById("game-board").innerHTML += "<div class='cell' style='background-color:".concat(colorArray[piece]).format().join("")'></div>.format();
+    }
+}
+
+let currentPiece;
+let ghostPiece;
+
+function getRandomPiece() {
+   return Math.floor(Math.random() * tetrominos.length);
+}
+
+function startGame() {
+    currentPiece = getRandomPiece();
+    ghostPiece = getRandomPiece();
+    drawCurrentPieces();
+    moveAll(ghostPiece, [0, 1]);
+}
+
+startGame();
+setInterval(moveAll, 1000);
+
+function moveAll(piece, direction) {
+        if (direction[0] === 0) { //horizontal move
+            for (let i=0; i < tetrominos[piece][3].length; i++) {
+                let pieceIndex = tetrominos[piece][i];
+                let newPieceIndex = tetrominos[piece].slice(pieceIndex);
+                if(newPieceIndex[i] && newPieceIndex[i+1]) continue;
+                if(direction[0] === 1) { // move left
+                    let cellXCoordinate = this.findCoordinate(tetrominos[piece], i, direction)[0];
+                    let prevCellColor = previousColumn(grid[tetrominos[piece][i][0] + tetrominos[piece][i].find(i => !cellXCoordinate === cell[1])], 0);
+                    let currCellColor = findPreviousPiece(grid[tetrominos[piece][i][0]], i+2)
+
+                  // if previous color is the same as the current, and there are no pieces placed on it
+                } else {// right movement }
+                  }
+        function drawCurrentPieces() {
+    drawPiece([5, 0], currentPiece);
+    document.getElementById("board").style.backgroundColor="#666";
+}
+
+// main event listener for keyboard input
+
+document.addEventListener('keydown', e => {
+    //move left
+    if (e.key === "ArrowLeft")
+        moveGhost(ghostPiece, [-1, 0]);
+        // rotate
+        } else if(e.key === "ArrowUp") rotatePiece();
+        //move down
+        } else if(e.key === 'ArrowDown') moveAll(ghostPiece, [0, -20])
+            //soft drop
+        } else if (e.key === "s") {
+            moveAll(currentPiece, [0, 1]);
+    }).addEventlistener("keydown"{
+      // reset game
+    } else if(e.key === 'r') {
+
+let grid = [[["."].concat(Array(10).fill("."))]];
+document.getElementById("game-board").innerHTML = "";
+gridCount = grid.length;
+for (let i=0; i < gridCount; i++) {
+  document.getElementById('board').innerHTML += grid[i].join("</div><div class='cell'>") + "</div>";
+}
+score = 0;
+linesCleared = 0;
+
+startGame();
+
+// piece movement logic
+function moveGhost(piece, direction) {
+    let newXCoordinate = tetrominos[piece][tetrominos[piece][2]][1] + direction[0];
+        for (let i=0; i < gridLength; i++) {
+
+}
+
+// remove ghost line if no gaps between current and previous
+if ((ghostPiece === 7 && grid[currentX + 1][currentY+1][1].color != colorArray[0]) ||
+    (ghostPiece === 8 && grid[currentX - 1][currentY+5][1].color == colorArray[0]))
+        grid[currentX + 2] = grid[currentX+1];
+});
+
+// previous column colors
+
+ function previousColumn(line, x) {
+  // return the value in cell[x],[y],
+function rotatePiece() {
+  // switch to other orientation and call moveGhost
+  this.drawGhost(ghostPiece, [5,0]);
+    }
+
+</script>
+</body>
+</html>

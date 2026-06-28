@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossy Hop</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #20232a;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #wrap {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+  }
+  #game {
+    background: #6dbb4a;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    display: block;
+    image-rendering: pixelated;
+    touch-action: none;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+    pointer-events: none;
+  }
+  #hud {
+    top: 0;
+    bottom: auto;
+    justify-content: flex-start;
+    padding-top: 14px;
+    flex-direction: row;
+    gap: 28px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  #hud .stat { font-size: 13px; opacity: 0.85; letter-spacing: 1px; }
+  #hud .val { font-size: 30px; font-weight: 800; line-height: 1; }
+  #hud .col { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  #gameover {
+    background: rgba(20, 22, 28, 0.78);
+    pointer-events: auto;
+    display: none;
+  }
+  #gameover h1 { font-size: 46px; margin: 0 0 6px; letter-spacing: 2px; }
+  #gameover .sub { font-size: 16px; opacity: 0.85; margin-bottom: 4px; }
+  #gameover .best { font-size: 14px; opacity: 0.7; margin-bottom: 24px; }
+  #gameover .new { color: #ffd84d; font-weight: 700; }
+  #restartBtn {
+    pointer-events: auto;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    color: #20232a;
+    background: #ffd84d;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #c9a72f;
+    transition: transform .05s, box-shadow .05s;
+  }
+  #restartBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #c9a72f; }
+  #hint { position:absolute; bottom: 14px; left:0; right:0; text-align:center; color:#fff; opacity:0.5; font-size:12px; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div id="wrap" tabindex="0">
+  <canvas id="game"></canvas>
+  <div id="hud" class="overlay">
+    <div class="col"><span class="stat">SCORE</span><span class="val" id="score">0</span></div>
+    <div class="col"><span class="stat">BEST</span><span class="val" id="best">0</span></div>
+  </div>
+  <div id="gameover" class="overlay">
+    <h1>GAME OVER</h1>
+    <div class="sub">Score: <span id="finalScore">0</span></div>
+    <div class="best" id="bestLine">Best: 0</div>
+    <button id="restartBtn">Restart (R)</button>
+  </div>
+  <div id="hint">Arrow Keys / WASD to hop &nbsp;·&nbsp; Up = forward</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Config ----
+  const COLS = 11;              // grid width in cells
+  const CELL = 54;              // pixel size of a cell
+  const ROWS_VISIBLE = 13;      // how many lanes tall the viewport is
+  const WIDTH = COLS * CELL;
+  const HEIGHT = ROWS_VISIBLE * CELL;
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
+
+  // Fit canvas to screen while keeping aspect ratio
+  function resize() {
+    const scale = Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT);
+    canvas.style.width = (WIDTH * scale) + "px";
+    canvas.style.height = (HEIGHT * scale) + "px";
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const wrap = document.getElementById("wrap");
+  const scoreEl = document.getElementById("score");
+  const bestEl = document.getElementById("best");
+  const gameoverEl = document.getElementById("gameover");
+  const finalScoreEl = document.getElementById("finalScore");
+  const bestLineEl = document.getElementById("bestLine");
+  const restartBtn = document.getElementById("restartBtn");
+
+  const BEST_KEY = "crossyHopBest";
+  let best = parseInt(localStorage.getItem(BEST_KEY) || "0", 10) || 0;
+  bestEl.textContent = best;
+
+  // ---- Lane model ----
+  // Each lane has an index (row). row 0 is the starting grass lane.
+  // Higher row = further forward. Player moves up = row + 1.
+  // Lanes generated lazily, kept in a map by row index.
+
+  const LANE = { GRASS: 0, ROAD: 1, RIVER: 2 };
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+  function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+  function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  const CAR_COLORS = ["#e74c3c", "#3498db", "#9b59b6", "#e67e22", "#1abc9c", "#f1c40f"];
+  const LOG_COLOR = "#8B5A2B";
+  const LOG_COLOR_DARK = "#6e4420";
+
+  let lanes;        // map: row -> lane object
+  let maxLaneGen;   // highest row generated so far
+  let player;       // {col, row, x(px within lane), animating, ...}
+  let cameraRow;    // smooth camera position (in row units, fractional)
+  let score;
+  let state;        // "play" | "dead"
+  let lastTime;
+  let onLogOffset;  // fractional column offset while riding a log
+
+  function makeLane(row) {
+    // Force first few lanes to be safe grass.
+    let type;
+    if (row <= 2) {
+      type = LANE.GRASS;
+    } else {
+      const r = Math.random();
+      if (r < 0.30) type = LANE.GRASS;
+      else if (r < 0.68) type = LANE.ROAD;
+      else type = LANE.RIVER;
+    }
+
+    const lane = { row: row, type: type, obstacles: [] };
+
+    if (type === LANE.ROAD || type === LANE.RIVER) {
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      // speed in cells per second, scales slightly with progress
+      const diff = Math.min(row / 120, 1);
+      const baseSpeed = rand(1.6, 3.2) + diff * 1.6;
+      const speed = baseSpeed * dir;
+
+      if (type === LANE.ROAD) {
+        const isTruck = Math.random() < 0.35;
+        const len = isTruck ? randInt(2, 3) : 1;     // in cells
+        const color = choice(CAR_COLORS);
+        // gap between vehicles (in cells)
+        const gap = randInt(3, 6) + len;
+        const count = Math.ceil((COLS + 6) / gap) + 1;
+        let start = rand(0, gap);
+        for (let i = 0; i < count; i++) {
+          lane.obstacles.push({ x: start + i * gap, len: len, color: color });
+        }
+        lane.speed = speed;
+        lane.isTruck = isTruck;
+      } else {
+        // river: logs
+        const len = randInt(2, 4);
+        const gap = randInt(3, 5) + len;
+        const count = Math.ceil((COLS + 8) / gap) + 1;
+        let start = rand(0, gap);
+        for (let i = 0; i < count; i++) {
+          lane.obstacles.push({ x: start + i * gap, len: len });
+        }
+        lane.speed = speed * 0.8;
+      }
+    }
+    return lane;
+  }
+
+  function ensureLanes(uptoRow) {
+    while (maxLaneGen < uptoRow) {
+      maxLaneGen++;
+      lanes[maxLaneGen] = makeLane(maxLaneGen);
+    }
+  }
+
+  function laneAt(row) {
+    if (!lanes[row]) {
+      // generate any missing lower lanes too
+      if (row > maxLaneGen) ensureLanes(row);
+      else lanes[row] = makeLane(row);
+    }
+    return lanes[row];
+  }
+
+  function reset() {
+    lanes = {};
+    maxLaneGen = -1;
+    ensureLanes(ROWS_VISIBLE + 4);
+    player = { col: Math.floor(COLS / 2), row: 1, hopT: 1, fromCol: Math.floor(COLS/2), fromRow: 1, deadAnim: 0 };
+    cameraRow = player.row;
+    score = 0;
+    onLogOffset = 0;
+    state = "play";
+    lastTime = performance.now();
+    scoreEl.textContent = "0";
+    gameoverEl.style.display = "none";
+  }
+
+  // ---- Input ----
+  function tryMove(dCol, dRow) {
+    if (state !== "play") return;
+    // finish any in-progress hop instantly snaps to target (already done since hopT->1)
+    let newCol = player.col + dCol;
+    let newRow = player.row + dRow;
+    if (newCol < 0 || newCol >= COLS) return;     // can't leave sides
+    if (newRow < 0) return;                        // can't go below start
+
+    // commit move
+    player.fromCol = player.col;
+    player.fromRow = player.row;
+    player.col = newCol;
+    player.row = newRow;
+    player.hopT = 0;
+    onLogOffset = 0; // reset; will be recalculated if landing on a log lane during update
+
+    ensureLanes(player.row + ROWS_VISIBLE);
+
+    if (player.row > score) {
+      score = player.row;
+      scoreEl.textContent = score;
+    }
+  }
+
+  function onKey(e) {
+    const k = e.key.toLowerCase();
+    if (state === "dead") {
+      if (k === "r") { reset(); e.preventDefault(); }
+      return;
+    }
+    switch (k) {
+      case "arrowup": case "w": tryMove(0, 1); e.preventDefault(); break;
+      case "arrowdown": case "s": tryMove(0, -1); e.preventDefault(); break;
+      case "arrowleft": case "a": tryMove(-1, 0); e.preventDefault(); break;
+      case "arrowright": case "d": tryMove(1, 0); e.preventDefault(); break;
+    }
+  }
+  window.addEventListener("keydown", onKey);
+
+  // Touch / swipe support
+  let touchStart = null;
+  wrap.addEventListener("touchstart", function (e) {
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  wrap.addEventListener("touchend", function (e) {
+    if (!touchStart) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStart.x;
+    const dy = t.clientY - touchStart.y;
+    touchStart = null;
+    if (state === "dead") { reset(); return; }
+    if (Math.abs(dx) < 20 && Math.abs(dy) < 20) { tryMove(0, 1); return; } // tap = forward
+    if (Math.abs(dx) > Math.abs(dy)) tryMove(dx > 0 ? 1 : -1, 0);
+    else tryMove(0, dy < 0 ? 1 : -1);
+  }, { passive: true });
+
+  restartBtn.addEventListener("click", function () { reset(); wrap.focus(); });
+
+  // ---- Death ----
+  function die() {
+    if (state === "dead") return;
+    state = "dead";
+    player.deadAnim = 0;
+    if (score > best) {
+      best = score;
+      localStorage.setItem(BEST_KEY, String(best));
+      bestEl.textContent = best;
+      bestLineEl.innerHTML = '<span class="new">NEW BEST!</span> ' + best;
+    } else {
+      bestLineEl.textContent = "Best: " + best;
+    }
+    finalScoreEl.textContent = score;
+    gameoverEl.style.display = "flex";
+  }
+
+  // ---- Update ----
+  function update(dt) {
+    // Advance obstacle positions for all lanes that could be visible.
+    const lowRow = Math.floor(cameraRow) - 2;
+    const highRow = Math.floor(cameraRow) + ROWS_VISIBLE + 2;
+    for (let r = lowRow; r <= highRow; r++) {
+      const lane = lanes[r];
+      if (!lane || lane.type === LANE.GRASS) continue;
+      const span = COLS + 8;
+      for (const ob of lane.obstacles) {
+        ob.x += lane.speed * dt;
+        // wrap around with margin
+        if (lane.speed > 0 && ob.x > COLS + 4) ob.x -= span;
+        else if (lane.speed < 0 && ob.x < -4 - ob.len) ob.x += span;
+      }
+    }
+
+    // Hop animation
+    if (player.hopT < 1) {
+      player.hopT = Math.min(1, player.hopT + dt * 9);
+    }
+
+    // Smooth camera follows player, but only scrolls forward overall.
+    const targetCam = player.row;
+    cameraRow += (targetCam - cameraRow) * Math.min(1, dt * 6);
+
+    if (state !== "play") return;
+
+    // Collision / river logic only resolves when not mid-hop (use current target lane)
+    const lane = laneAt(player.row);
+
+    if (lane.type === LANE.ROAD) {
+      // car collision: only when settled enough on the lane
+      if (player.hopT > 0.35) {
+        const px = player.col + 0.5; // player center column
+        for (const ob of lane.obstacles) {
+          if (px > ob.x - 0.1 && px < ob.x + ob.len + 0.1) {
+            // overlap
+            if (px >= ob.x - 0.45 && px <= ob.x + ob.len + 0.45 - 0.1) {
+              die();
+              break;
+            }
+          }
+        }
+      }
+    } else if (lane.type === LANE.RIVER) {
+      // find a log under the player
+      let riding = null;
+      const px = player.col + 0.5;
+      for (const ob of lane.obstacles) {
+        if (px >= ob.x && px <= ob.x + ob.len) { riding = ob; break; }
+      }
+      if (riding) {
+        // carried by the log
+        if (player.hopT >= 1) {
+          const carry = lane.speed * dt; // cells
+          // move player smoothly: track fractional position via onLogOffset
+          onLogOffset += carry;
+          while (onLogOffset >= 1) { player.col += 1; onLogOffset -= 1; }
+          while (onLogOffset <= -1) { player.col -= 1; onLogOffset += 1; }
+          // off the screen edges = death
+          const realCol = player.col + onLogOffset;
+          if (realCol < -0.4 || realCol > COLS - 0.6) {
+            die();
+          }
+        }
+      } else {
+        // in water without log
+        if (player.hopT > 0.5) die();
+      }
+    } else {
+      onLogOffset = 0;
+    }
+
+    // Fell too far behind camera -> game over
+    if (state === "play") {
+      const screenRow = player.row - cameraRow; // 0 at bottom-ish reference
+      // player should stay above bottom; if camera moved up past player by margin
+      if (cameraRow - player.row > BACK_LIMIT) {
+        die();
+      }
+    }
+  }
+
+  const BACK_LIMIT = 4; // how many lanes behind camera before death
+  const PLAYER_SCREEN_ROW = 4; // player's nominal row from bottom
+
+  // ---- Render ----
+  function rowToScreenY(row) {
+    // camera: player nominal sits at PLAYER_SCREEN_ROW from bottom
+    const rel = row - cameraRow;
+    return HEIGHT - (rel + PLAYER_SCREEN_ROW) * CELL;
+  }
+
+  function laneColor(lane) {
+    if (lane.type === LANE.GRASS) return (lane.row % 2 === 0) ? "#7ec850" : "#74bf48";
+    if (lane.type === LANE.ROAD) return "#3a3f4b";
+    return "#3a78c2"; // river
+  }
+
+  function drawRoundRect(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    const topRow = Math.ceil(cameraRow) + ROWS_VISIBLE;
+    const botRow = Math.floor(cameraRow) - PLAYER_SCREEN_ROW - 1;
+
+    // Draw lanes from bottom to top
+    for (let r = botRow; r <= topRow; r++) {
+      if (r < 0) {
+        // void below start: just dark grass
+        const y = rowToScreenY(r);
+        ctx.fillStyle = "#5a9e3a";
+        ctx.fillRect(0, y - CELL, WIDTH, CELL);
+        continue;
+      }
+      const lane = laneAt(r);
+      const y = rowToScreenY(r);
+      const top = y - CELL;
+      ctx.fillStyle = laneColor(lane);
+      ctx.fillRect(0, top, WIDTH, CELL);
+
+      if (lane.type === LANE.ROAD) {
+        // lane dashes
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([14, 16]);
+        ctx.beginPath();
+        ctx.moveTo(0, top + CELL / 2);
+        ctx.lineTo(WIDTH, top + CELL / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (lane.type === LANE.RIVER) {
+        // subtle water shimmer
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
+        for (let i = 0; i < COLS; i += 2) {
+          ctx.fillRect(i * CELL, top + 10, CELL, 4);
+        }
+      }
+
+      // Obstacles
+      if (lane.type === LANE.ROAD) {
+        for (const ob of lane.obstacles) {
+          const ox = ob.x * CELL;
+          const ow = ob.len * CELL;
+          if (ox + ow < -20 || ox > WIDTH + 20) continue;
+          const pad = 6;
+          // body
+          ctx.fillStyle = ob.color;
+          drawRoundRect(ox + pad, top + pad, ow - pad * 2, CELL - pad * 2, 8);
+          ctx.fill();
+          // windows
+          ctx.fillStyle = "rgba(255,255,255,0.65)";
+          const wy = top + pad + 4;
+          const wh = (CELL - pad * 2) - 8;
+          if (ob.len >= 2) {
+            // truck: cab window on direction side
+            if (lane.speed > 0) drawRoundRect(ox + ow - pad - 16, wy, 12, wh, 3);
+            else drawRoundRect(ox + pad + 4, wy, 12, wh, 3);
+            ctx.fill();
+          } else {
+            drawRoundRect(ox + pad + 4, wy, ow - pad * 2 - 8, wh, 3);
+            ctx.fill();
+          }
+          // wheels hint
+          ctx.fillStyle = "rgba(0,0,0,0.45)";
+          ctx.fillRect(ox + pad + 4, top + CELL - pad - 3, 10, 4);
+          ctx.fillRect(ox + ow - pad - 14, top + CELL - pad - 3, 10, 4);
+        }
+      } else if (lane.type === LANE.RIVER) {
+        for (const ob of lane.obstacles) {
+          const ox = ob.x * CELL;
+          const ow = ob.len * CELL;
+          if (ox + ow < -20 || ox > WIDTH + 20) continue;
+          const pad = 5;
+          ctx.fillStyle = LOG_COLOR;
+          drawRoundRect(ox + pad, top + pad, ow - pad * 2, CELL - pad * 2, 12);
+          ctx.fill();
+          // wood grain lines
+          ctx.strokeStyle = LOG_COLOR_DARK;
+          ctx.lineWidth = 2;
+          for (let g = 1; g < ob.len; g++) {
+            ctx.beginPath();
+            ctx.moveTo(ox + g * CELL, top + pad + 2);
+            ctx.lineTo(ox + g * CELL, top + CELL - pad - 2);
+            ctx.stroke();
+          }
+          // end rings
+          ctx.fillStyle = LOG_COLOR_DARK;
+          ctx.beginPath();
+          ctx.arc(ox + pad + 8, top + CELL / 2, 5, 0, Math.PI * 2);
+          ctx.arc(ox + ow - pad - 8, top + CELL / 2, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // ---- Player ----
+    // interpolate hop position
+    const t = player.hopT;
+    const ease = 1 - Math.pow(1 - t, 2);
+    let pcol = player.fromCol + (player.col - player.fromCol) * ease;
+    let prow = player.fromRow + (player.row - player.fromRow) * ease;
+    // add log carry offset when settled
+    if (t >= 1) pcol = player.col + onLogOffset;
+
+    const hopLift = Math.sin(t * Math.PI) * 14; // jump arc height
+    const px = pcol * CELL + CELL / 2;
+    const py = rowToScreenY(prow) - CELL / 2 - hopLift;
+
+    // shadow
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(px, rowToScreenY(prow) - CELL / 2 + 12, 16, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // dead animation: flatten / fade
+    let squish = 1;
+    if (state === "dead") {
+      player.deadAnim = Math.min(1, player.deadAnim + 0.04);
+      squish = 1 - player.deadAnim * 0.7;
+    }
+
+    const size = 34;
+    const w = size;
+    const h = size * squish;
+    ctx.save();
+    ctx.translate(px, py);
+    // body
+    ctx.fillStyle = "#f9f9f7";
+    drawRoundRect(-w / 2, -h / 2, w, h, 8);
+    ctx.fill();
+    // belly
+    ctx.fillStyle = "#ffe27a";
+    drawRoundRect(-w / 2 + 6, -h / 2 + h * 0.45, w - 12, h * 0.45, 6);
+    ctx.fill();
+    // eyes
+    if (state !== "dead") {
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.arc(-7, -h / 2 + 9, 3, 0, Math.PI * 2);
+      ctx.arc(7, -h / 2 + 9, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // beak
+      ctx.fillStyle = "#f5a623";
+      ctx.beginPath();
+      ctx.moveTo(-4, -h / 2 + 15);
+      ctx.lineTo(4, -h / 2 + 15);
+      ctx.lineTo(0, -h / 2 + 20);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-9, -h/2+6); ctx.lineTo(-4, -h/2+11);
+      ctx.moveTo(-4, -h/2+6); ctx.lineTo(-9, -h/2+11);
+      ctx.moveTo(4, -h/2+6); ctx.lineTo(9, -h/2+11);
+      ctx.moveTo(9, -h/2+6); ctx.lineTo(4, -h/2+11);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ---- Main loop ----
+  function frame(now) {
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+    if (dt > 0.1) dt = 0.1; // clamp after tab switch
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  reset();
+  wrap.focus();
+  requestAnimationFrame(frame);
+
+  // keep focus
+  window.addEventListener("click", function () { wrap.focus(); });
+})();
+</script>
+</body>
+</html>

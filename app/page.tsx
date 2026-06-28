@@ -72,12 +72,25 @@ export default async function HomePage() {
         )}
 
         <section className="mt-12">
-          <SectionHead title="🧾 리뷰한 SaaS" href="/blog" />
+          <SectionHead title="🧾 리뷰한 SaaS" href="/saas" />
           <div className="space-y-2.5">
             {saasList.map((saas) => (
               <SaasCard key={saas.id} saas={saas} />
             ))}
           </div>
+        </section>
+
+        <section className="mt-12">
+          <SectionHead title="🧪 AI 모델 실험실" href="/lab" />
+          <Link
+            href="/lab"
+            className="block rounded-xl border border-border bg-card p-4 transition hover:border-accent/50"
+          >
+            <h3 className="text-sm font-semibold text-white">같은 미션, 다른 모델</h3>
+            <p className="mt-1 text-xs text-muted">
+              Claude부터 로컬 오픈모델까지 — 동일한 프롬프트로 테트리스·2048·격투게임·크로시 로드를 만들게 한 결과물을 그대로 실행해보고 점수로 비교합니다.
+            </p>
+          </Link>
         </section>
 
         <footer className="mt-16 border-t border-border pt-8 text-center text-sm text-muted">

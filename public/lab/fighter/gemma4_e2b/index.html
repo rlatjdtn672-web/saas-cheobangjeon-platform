@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Fighter</title>
+    <style>
+        body {
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: monospace;
+            color: #eee;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background-color: #000;
+            display: block;
+        }
+        #ui-container {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 10px;
+        }
+        .health-bar-container {
+            width: 45%;
+            background-color: #555;
+            border: 1px solid #fff;
+        }
+        .health-bar {
+            height: 30px;
+            width: 100%;
+            background-color: #222;
+            border: 1px solid #fff;
+        }
+        .health-fill {
+            height: 100%;
+            background-color: #f00;
+        }
+        #controls {
+            margin-top: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #info-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+        }
+        .modal {
+            padding: 30px;
+            border: 3px solid #fff;
+            background-color: rgba(0, 0, 0, 0.85);
+            max-width: 80%;
+        }
+        .modal button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+    <div id="ui-container">
+        <div class="health-bar-container">
+            <div class="health-bar"><div id="playerHealthBar" class="health-fill"></div></div>
+        </div>
+        <div class="health-bar-container">
+            <div class="health-bar"><div id="cpuHealthBar" class="health-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="controls">
+        Controls: Arrows (Move), Up (Jump), Down (Crouch), A/D (Walk), Space (Jump), Z (Punch), X (Kick), K (Block), S (Special)
+    </div>
+
+    <div id="info-screen" style="display: none;">
+        <div class="modal">
+            <h2 id="screenTitle"></h2>
+            <p id="screenMessage"></p>
+            <button id="startRematchBtn" style="display: none;">Rematch</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CANVAS = document.getElementById('gameCanvas');
+        const CTX = CANVAS.getContext('2d');
+        const GAME_WIDTH = CANVAS.width;
+        const GAME_HEIGHT = CANVAS.height;
+
+        // --- GAME STATE ---
+        let gameState = 'menu'; // 'menu', 'select_char', 'select_cpu', 'gameplay', 'end_game'
+        let player = {};
+        let cpu = {};
+        let gamePhase = 'setup'; // setup, char_select, cpu_select, gameplay, end_game
+
+        // --- CHARACTER DEFINITIONS ---
+        const CHARACTERS = [
+            { id: 0, name: "Ryu", hp: 100, walkSpeed: 5, attackReach: 30, special: "hadouken", color: "#FF0000", specialMove: "Hadouken" },
+            { id: 1, name: "Ken", hp: 100, walkSpeed: 6, attackReach: 32, special: "shoryuken", color: "#00FF00", specialMove: "Shoryuken" },
+            { id: 2, name: "Chun-Li", hp: 100, walkSpeed: 5.5, attackReach: 35, special: "seikyo", color: "#0000FF", specialMove: "Seikyo" },
+            { id: 3, name: "Guile", hp: 100, walkSpeed: 4.5, attackReach: 28, special: "spin_kick", color: "#FFA500", specialMove: "Spin Kick" },
+            { id: 4, name: "Blanka", hp: 100, walkSpeed: 5, attackReach: 30, special: "blanka_crash", color: "#008000", specialMove: "Blanka Crash" },
+            { id: 5, name: "Zangief", hp: 100, walkSpeed: 4, attackReach: 25, special: "dhalsim_reach", color: "#800080", specialMove: "Dhalsim Reach" },
+            { id: 6, name: "Dhalsim", hp: 100, walkSpeed: 4.8, attackReach: 33, special: "dhalsim_reach", color: "#FF4500", specialMove: "Dhalsim Reach" },
+            { id: 7, name: "E. Honda", hp: 100, walkSpeed: 5, attackReach: 30, special: "honda_punch", color: "#FF6347", specialMove: "Honda Punch" }
+        ];
+
+        // --- DIFFICULTY SETTINGS ---
+        const DIFFICULTIES = {
+            Easy: { cpuReaction: 300, cpuAggression: 0.4, cpuBlockChance: 0.4 },
+            Medium: { cpuReaction: 200, cpuAggression: 0.6, cpuBlockChance: 0.6 },
+            Hard: { cpuReaction: 100, cpuAggression: 0.85, cpuBlockChance: 0.8 }
+        };
+        let cpuDifficulty = DIFFICULTIES.Medium;
+
+        // --- GAME OBJECTS (To be initialized based on selection) ---
+        let entities = []; // Stores player and CPU objects
+
+        // --- INPUT STATE ---
+        const keys = {};
+        const controls = {
+            left: 'ArrowLeft',
+            right: 'ArrowRight',
+            up: 'ArrowUp',
+            down: 'ArrowDown',
+            jump: 'Space',
+            punch: 'z',
+            kick: 'x',
+            block: 'k',
+            special: 's'
+        };
+
+        // --- GAME INITIALIZATION FUNCTIONS ---
+
+        function setupCharacterSelection() {
+            gameState = 'select_char';
+            entities = [];
+            // Logic to select player character
+        }
+
+        function setupDifficultySelection() {
+            gameState = 'select_cpu';
+            // Logic to select CPU difficulty
+        }
+
+        function startGame() {
+            gameState = 'gameplay';
+            // Initialize player and CPU based on choices
+        }
+
+        function setupGame() {
+            gameState = 'gameplay';
+            // Final setup
+        }
+
+        function showScreen(title, message, isRematch = false) {
+            document.getElementById('screenTitle').textContent = title;
+            document.getElementById('screenMessage').textContent = message;
+            document.getElementById('startRematchBtn').style.display = isRematch ? 'inline-block' : 'none';
+            document.getElementById('info-screen').style.display = 'flex';
+        }
+
+        // --- DRAWING FUNCTIONS ---
+
+        /**
+         * Draws a simple fighting character on the canvas.
+         * @param {object} entity - The character object.
+         * @param {number} x - The x position.
+         * @param {number} y - The y position.
+         * @param {string} color - The fill color.
+         * @param {string} special - The name of the special move.
+         * @param {boolean} isBlock - Whether the character is blocking.
+         */
+        function drawCharacter(ctx, entity, x, y, color, special, isBlock) {
+            // Body (Rectangle for simplicity)
+            ctx.fillStyle = color;
+            ctx.fillRect(x - 20, y - 30, 40, 60);
+
+            // Health Bar background (Simplified)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x - 20, y - 50, 40, 20);
+            ctx.fillStyle = isBlock ? '#0000FF' : '#FF0000';
+            ctx.fillRect(x - 20, y - 50, 40, 20);
+
+
+            // Special indication (simple text)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '12px monospace';
+            ctx.fillText(`${entity.name} (${entity.special})`, x - 15, y - 60);
+
+            // Block Indicator
+            if (isBlock) {
+                ctx.strokeStyle = '#FFFF00';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x - 20, y - 30, 40, 60);
+            }
+        }
+
+        function drawGame() {
+            CTX.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Draw Ground/Floor (Simple line)
+            CTX.strokeStyle = '#555';
+            CTX.beginPath();
+            CTX.moveTo(0, GAME_HEIGHT - 20);
+            CTX.lineTo(GAME_WIDTH, GAME_HEIGHT - 20);
+            CTX.stroke();
+
+            // Draw Entities
+            if (player && cpu) {
+                // Draw Player
+                drawCharacter(CTX, player, player.x, player.y, player.color, player.special, player.isBlocking);
+
+                // Draw CPU
+                drawCharacter(CTX, cpu, cpu.x, cpu.y, cpu.color, cpu.special, cpu.isBlocking);
+            }
+        }
+
+        // --- GAME LOGIC (Simplified Placeholder) ---
+
+        function handleInput() {
+            if (gameState !== 'gameplay') return;
+
+            // Player Movement & Jumping (Simplified)
+            let dx = 0;
+            if (keys[controls.left]) dx -= player.walkSpeed;
+            if (keys[controls.right]) dx += player.walkSpeed;
+
+            player.x += dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x > GAME_WIDTH - 40) player.x = GAME_WIDTH - 40;
+
+            // Jump/Crouch (simplified)
+            if (keys[controls.jump] && !player.isJumping) {
+                player.y -= 15; // Jump up
+            }
+            if (keys[controls.down] && !player.isJumping) {
+                player.y += 10; // Crouch down
+            }
+            player.y = Math.min(player.y, GAME_HEIGHT - 30); // Keep within bounds
+
+            // Attack/Block/Special (Simplified for demo)
+            if (keys[controls.punch]) {
+                // Punch logic (simplified hitbox check against CPU)
+            }
+            if (keys[controls.kick]) {
+                // Kick logic
+            }
+            if (keys[controls.block]) {
+                player.isBlocking = true;
+            }
+            if (keys[controls.special]) {
+                // Special move logic
+            }
+        }
+
+        function handleCPU(deltaTime) {
+            if (gameState !== 'gameplay') return;
+
+            // Simple AI based on difficulty
+            const reactionTime = cpuDifficulty.cpuReaction;
+
+            // Basic approach logic
+            const targetX = player.x;
+            let dx = targetX - cpu.x;
+            let moveSpeed = cpu.walkSpeed * 0.8;
+
+            // CPU tries to close distance
+            if (Math.abs(dx) > 30) {
+                cpu.x += Math.sign(dx) * moveSpeed;
+            } else if (Math.abs(dx) <= 30) {
+                // Attack/Block logic based on difficulty
+                if (Math.random() < cpuDifficulty.cpuBlockChance * 0.5) {
+                    cpu.isBlocking = true;
+                } else {
+                    cpu.isBlocking = false;
+                }
+
+                // CPU randomly initiates a special move
+                if (Math.random() < cpuDifficulty.cpuAggression * 0.1) {
+                    cpu.special = cpu.specialMove;
+                } else {
+                    cpu.special = null;
+                }
+            }
+        }
+
+        function updateHealthBars() {
+            document.getElementById('playerHealthBar').style.width = `${(player.hp / 100) * 100}%`;
+            document.getElementById('cpuHealthBar').style.width = `${(cpu.hp / 100) * 100}%`;
+        }
+
+        function checkGameEnd() {
+            if (player.hp <= 0 || cpu.hp <= 0) {
+                gameState = 'end_game';
+                const winner = player.hp > 0 ? player.name : cpu.name;
+                const loser = player.hp > 0 ? cpu.name : player.name;
+                showScreen(`Game Over!`, `${winner} wins!`, false);
+            }
+        }
+
+        // --- GAME LOOP ---
+
+        let lastTime = 0;
+        function gameLoop(time) {
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            if (gameState === 'gameplay') {
+                handleInput();
+                handleCPU(deltaTime);
+                drawGame();
+                updateHealthBars();
+                checkGameEnd();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- INPUT BINDING ---
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            // Prevent default browser actions for game controls
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'z', 'x', 'k', 's'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // --- INITIAL SETUP (To be populated by screen logic) ---
+        setupCharacterSelection(); // Start at selection screen
+
+    </script>
+</body>
+</html>
