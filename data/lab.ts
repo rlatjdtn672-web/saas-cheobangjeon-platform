@@ -1,5 +1,5 @@
 // 자동 생성 (LLM eval 결과). 모델별 게임 결과물 + 점수 + 프롬프트.
-export type LabModel = { model: string; name: string; vendor: string; score: number; buildS: number; bytes: number; playable: boolean; hasFile: boolean; url: string | null; isClaude: boolean; features: Record<string, boolean> };
+export type LabModel = { model: string; name: string; vendor: string; score: number; buildS: number; bytes: number; playable: boolean; hasFile: boolean; url: string | null; isClaude: boolean; features: Record<string, boolean>; verdict: "works" | "broken" | "fail" };
 export type LabTask = { key: string; title: string; emoji: string; prompt: string; maxScore: number; models: LabModel[] };
 export const LAB_TASKS: LabTask[] = [
   {
@@ -27,7 +27,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
       },
       {
         "model": "Opus",
@@ -47,7 +48,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
       },
       {
         "model": "Sonnet",
@@ -67,7 +69,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
       },
       {
         "model": "llama3.1:8b",
@@ -87,7 +90,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "qwen3:8b",
@@ -107,7 +111,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "gemma4:e2b",
@@ -127,7 +132,8 @@ export const LAB_TASKS: LabTask[] = [
           "line_clear": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "mistral-small3.2",
@@ -140,7 +146,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       }
     ]
   },
@@ -166,7 +173,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
       },
       {
         "model": "Haiku",
@@ -183,7 +191,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "gemma4:e2b",
@@ -200,7 +209,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "Sonnet",
@@ -217,7 +227,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "qwen3:8b",
@@ -234,7 +245,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "llama3.1:8b",
@@ -247,7 +259,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "mistral-small3.2",
@@ -260,7 +273,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       }
     ]
   },
@@ -271,22 +285,6 @@ export const LAB_TASKS: LabTask[] = [
     "prompt": "Create a single self-contained file named index.html that implements a 2D Street Fighter-style fighting game using only HTML, CSS, and vanilla JavaScript with a <canvas> (NO external libraries, NO CDN, NO image files - draw all fighters and effects with canvas shapes).\n\nRequirements:\n- A character-select screen with 8 PLAYABLE characters, each visually distinct and with different stats (health, walk speed, attack reach) and at least one unique special move: Ryu (hadouken fireball), Ken, Chun-Li, Guile, Blanka, Zangief, Dhalsim (long-reach limbs), and E. Honda.\n- A difficulty-select screen with three CPU difficulty levels: Easy, Medium, Hard - affecting the opponent AI's reaction time, aggression, and how often it blocks or uses specials.\n- One human player versus one CPU-controlled opponent. The CPU must move, approach, attack, block, and use specials on its own according to the chosen difficulty.\n- Controls: left/right to walk, up to jump, down to crouch, plus keys for punch, kick, block, and special move. Show the control mapping on screen.\n- Two health bars, hit detection with damage, hit/block reactions, knockdown/KO, best-of-3 rounds, and a win/lose screen with a rematch option.\n- Smooth game loop via requestAnimationFrame.\n\nEverything must live in the one index.html and run by simply opening it in a browser. Make the page focusable so keys work immediately. Use the Write tool to create index.html now. Do not ask any questions.",
     "maxScore": 14,
     "models": [
-      {
-        "model": "Haiku",
-        "name": "Claude Haiku 4.5",
-        "vendor": "Anthropic",
-        "score": 14,
-        "buildS": 180,
-        "bytes": 37148,
-        "playable": true,
-        "hasFile": true,
-        "url": "/lab/fighter/claude-haiku-4-5-20251001/index.html",
-        "isClaude": true,
-        "features": {
-          "keyboard": true,
-          "self_contained": true
-        }
-      },
       {
         "model": "Opus",
         "name": "Claude Opus 4.8",
@@ -301,7 +299,25 @@ export const LAB_TASKS: LabTask[] = [
         "features": {
           "keyboard": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
+      },
+      {
+        "model": "Haiku",
+        "name": "Claude Haiku 4.5",
+        "vendor": "Anthropic",
+        "score": 14,
+        "buildS": 180,
+        "bytes": 37148,
+        "playable": true,
+        "hasFile": true,
+        "url": "/lab/fighter/claude-haiku-4-5-20251001/index.html",
+        "isClaude": true,
+        "features": {
+          "keyboard": true,
+          "self_contained": true
+        },
+        "verdict": "broken"
       },
       {
         "model": "gemma4:e2b",
@@ -317,7 +333,8 @@ export const LAB_TASKS: LabTask[] = [
         "features": {
           "keyboard": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "llama3.1:8b",
@@ -330,7 +347,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "Sonnet",
@@ -343,7 +361,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": true,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "qwen3:8b",
@@ -356,7 +375,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "mistral-small3.2",
@@ -369,7 +389,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       }
     ]
   },
@@ -395,7 +416,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "works"
       },
       {
         "model": "Haiku",
@@ -412,7 +434,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "gemma4:e2b",
@@ -429,7 +452,8 @@ export const LAB_TASKS: LabTask[] = [
           "keyboard": true,
           "score": true,
           "self_contained": true
-        }
+        },
+        "verdict": "broken"
       },
       {
         "model": "llama3.1:8b",
@@ -442,7 +466,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "qwen3:8b",
@@ -455,7 +480,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "Sonnet",
@@ -468,7 +494,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": true,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       },
       {
         "model": "mistral-small3.2",
@@ -481,7 +508,8 @@ export const LAB_TASKS: LabTask[] = [
         "hasFile": false,
         "url": null,
         "isClaude": false,
-        "features": {}
+        "features": {},
+        "verdict": "fail"
       }
     ]
   }

@@ -11,9 +11,80 @@ const VENDOR_COLOR: Record<string, string> = {
   Mistral: "text-rose-400 bg-rose-400/10",
 };
 
+type Verdict = "works" | "broken" | "fail";
+const VERDICT: Record<Verdict, { icon: string; label: string; cls: string }> = {
+  works: { icon: "✅", label: "정상 작동", cls: "text-emerald-400" },
+  broken: { icon: "⚠️", label: "작동 이상", cls: "text-amber-400" },
+  fail: { icon: "❌", label: "생성 실패", cls: "text-rose-400/80" },
+};
+
 function VendorBadge({ vendor }: { vendor: string }) {
   const c = VENDOR_COLOR[vendor] || "text-zinc-400 bg-white/5";
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${c}`}>{vendor || "—"}</span>;
+}
+
+// 전체 요약 매트릭스 (모델 × 과제)
+function SummaryMatrix({ tasks }: { tasks: LabTask[] }) {
+  const byModel: Record<string, { name: string; vendor: string; cells: Record<string, Verdict>; pts: number }> = {};
+  tasks.forEach((t) =>
+    t.models.forEach((m) => {
+      const v = m.verdict as Verdict;
+      if (!byModel[m.model]) byModel[m.model] = { name: m.name, vendor: m.vendor, cells: {}, pts: 0 };
+      byModel[m.model].cells[t.key] = v;
+      byModel[m.model].pts += v === "works" ? 2 : v === "broken" ? 1 : 0;
+    })
+  );
+  const rows = Object.values(byModel).sort(
+    (a, b) => b.pts - a.pts || (a.vendor === "Anthropic" ? -1 : b.vendor === "Anthropic" ? 1 : 0)
+  );
+
+  return (
+    <div className="mb-7">
+      <h2 className="mb-2 text-sm font-semibold text-white">📋 전체 요약 — 모델 × 과제</h2>
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-border text-[11px] uppercase tracking-wide text-muted">
+            <tr>
+              <th className="px-3.5 py-2.5 font-medium">모델</th>
+              {tasks.map((t) => (
+                <th key={t.key} className="px-2 py-2.5 text-center font-medium" title={t.title}>
+                  {t.emoji}
+                </th>
+              ))}
+              <th className="px-3 py-2.5 text-right font-medium">종합</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.name} className="border-b border-border/60 last:border-0">
+                <td className="px-3.5 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="whitespace-nowrap font-medium text-white">{r.name}</span>
+                    <VendorBadge vendor={r.vendor} />
+                  </div>
+                </td>
+                {tasks.map((t) => {
+                  const v = r.cells[t.key];
+                  return (
+                    <td key={t.key} className="px-2 py-2.5 text-center" title={v ? VERDICT[v].label : ""}>
+                      {v ? VERDICT[v].icon : "—"}
+                    </td>
+                  );
+                })}
+                <td className="px-3 py-2.5 text-right tabular-nums text-zinc-300">{r.pts}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
+        <span>✅ 정상 작동</span>
+        <span>⚠️ 만들었으나 정상 동작 안 함</span>
+        <span>❌ 생성 실패</span>
+        <span className="text-zinc-500">· 종합 = 정상 2점 / 작동이상 1점 / 실패 0점</span>
+      </div>
+    </div>
+  );
 }
 
 export default function LabView({ tasks }: { tasks: LabTask[] }) {
@@ -22,16 +93,19 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
   const task = tasks.find((t) => t.key === activeKey) || tasks[0];
   if (!task) return null;
 
-  const playableCount = task.models.filter((m) => m.hasFile && m.url).length;
+  const counts = { works: 0, broken: 0, fail: 0 };
+  task.models.forEach((m) => (counts[m.verdict as Verdict] += 1));
 
   return (
     <div className="relative mx-auto max-w-3xl px-5 pb-24 pt-6">
       <header className="mb-5">
         <h1 className="text-2xl font-bold text-white">🧪 AI 모델 실험실</h1>
         <p className="mt-1.5 text-sm text-muted">
-          같은 미션, 다른 모델. 클로드부터 로컬 오픈모델까지 — 동일한 프롬프트 하나로 게임을 만들게 시키고 결과물을 그대로 비교합니다.
+          같은 미션, 다른 모델. 클로드부터 로컬 오픈모델까지 — 동일한 프롬프트 하나로 게임을 만들게 시키고, 직접 다 돌려본 결과를 그대로 비교합니다.
         </p>
       </header>
+
+      <SummaryMatrix tasks={tasks} />
 
       {/* 과제 탭 */}
       <div className="mb-5 flex flex-wrap gap-2">
@@ -56,7 +130,10 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
       {/* 과제 헤더 + 프롬프트 보기 */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-white">
-          {task.emoji} {task.title} · 결과물 {playableCount}개
+          {task.emoji} {task.title}{" "}
+          <span className="ml-1 text-sm font-normal text-muted">
+            ✅ {counts.works} · ⚠️ {counts.broken} · ❌ {counts.fail}
+          </span>
         </h2>
         <button
           onClick={() => setPromptOpen(true)}
@@ -73,56 +150,65 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
             <tr>
               <th className="px-3.5 py-2.5 font-medium">#</th>
               <th className="px-1 py-2.5 font-medium">모델</th>
-              <th className="px-2 py-2.5 font-medium">점수</th>
-              <th className="hidden px-2 py-2.5 font-medium sm:table-cell">빌드</th>
+              <th className="px-2 py-2.5 font-medium">판정</th>
+              <th className="hidden px-2 py-2.5 font-medium sm:table-cell">점수</th>
+              <th className="hidden px-2 py-2.5 font-medium md:table-cell">빌드</th>
               <th className="px-2 py-2.5 text-right font-medium">플레이</th>
             </tr>
           </thead>
           <tbody>
-            {task.models.map((m, i) => (
-              <tr key={m.model} className="border-b border-border/60 last:border-0">
-                <td className="px-3.5 py-2.5 text-muted">{i + 1}</td>
-                <td className="px-1 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{m.name}</span>
-                    <VendorBadge vendor={m.vendor} />
-                  </div>
-                </td>
-                <td className="px-2 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-accent"
-                        style={{ width: `${Math.round((m.score / task.maxScore) * 100)}%` }}
-                      />
+            {task.models.map((m, i) => {
+              const v = VERDICT[m.verdict as Verdict];
+              return (
+                <tr key={m.model} className="border-b border-border/60 last:border-0">
+                  <td className="px-3.5 py-2.5 text-muted">{i + 1}</td>
+                  <td className="px-1 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-white">{m.name}</span>
+                      <VendorBadge vendor={m.vendor} />
                     </div>
-                    <span className="tabular-nums text-zinc-300">{m.score}</span>
-                  </div>
-                </td>
-                <td className="hidden px-2 py-2.5 tabular-nums text-muted sm:table-cell">
-                  {m.buildS ? `${m.buildS}s` : "—"}
-                </td>
-                <td className="px-2 py-2.5 text-right">
-                  {m.hasFile && m.url ? (
-                    <a
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block rounded-lg bg-accent/15 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/25"
-                    >
-                      ▶ Play
-                    </a>
-                  ) : (
-                    <span className="text-[11px] text-rose-400/80">✗ 실패</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className={`px-2 py-2.5 ${v.cls}`}>
+                    <span className="whitespace-nowrap">
+                      {v.icon} <span className="hidden text-xs sm:inline">{v.label}</span>
+                    </span>
+                  </td>
+                  <td className="hidden px-2 py-2.5 sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-accent"
+                          style={{ width: `${Math.round((m.score / task.maxScore) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="tabular-nums text-zinc-300">{m.score}</span>
+                    </div>
+                  </td>
+                  <td className="hidden px-2 py-2.5 tabular-nums text-muted md:table-cell">
+                    {m.buildS ? `${m.buildS}s` : "—"}
+                  </td>
+                  <td className="px-2 py-2.5 text-right">
+                    {m.hasFile && m.url ? (
+                      <a
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block rounded-lg bg-accent/15 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/25"
+                      >
+                        ▶ Play
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-muted">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
       <p className="mt-4 text-xs text-muted">
-        ▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). 각 결과물은 외부 라이브러리 없이 단일 HTML 파일로 생성됐습니다.
+        ▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). ⚠️ 표시는 결과물이 만들어졌지만 실제로는 제대로 동작하지 않은 경우로, 직접 눌러서 확인해볼 수 있습니다.
       </p>
 
       {/* 프롬프트 모달 */}
