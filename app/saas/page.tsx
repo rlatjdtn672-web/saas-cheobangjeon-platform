@@ -51,7 +51,7 @@ export default async function SaasIndexPage() {
               className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-4 transition hover:border-accent/50"
             >
               <Logo name={saas.name} logoUrl={saas.logoUrl} />
-              <Link href={`/s/${saas.slug}`} className="min-w-0 flex-1">
+              <Link href={saas.slug === "ai-lab" ? "/lab" : `/s/${saas.slug}`} className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="truncate text-[15px] font-semibold text-white">{saas.name}</h3>
                   {saas.issueNo && <span className="flex-none text-[11px] text-muted">{saas.issueNo}</span>}

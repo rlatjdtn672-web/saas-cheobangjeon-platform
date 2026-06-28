@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getStore } from "@/lib/store";
 import { NEWSLETTER } from "@/data/seed";
@@ -55,6 +55,9 @@ export async function generateMetadata({
 }
 
 export default async function SaasDetail({ params }: { params: { slug: string } }) {
+  // 실험실(4호)은 별도 상세 없이 곧장 /lab 으로 — 한 번에 진입
+  if (params.slug === "ai-lab") redirect("/lab");
+
   const saas = await getStore().getSaas(params.slug);
   if (!saas) notFound();
 

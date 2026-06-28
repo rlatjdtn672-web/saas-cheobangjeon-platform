@@ -22,7 +22,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/english`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/saas`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/lab`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    ...saas.map((s) => ({
+    ...saas
+      .filter((s) => s.slug !== "ai-lab") // /s/ai-lab 은 /lab 으로 리다이렉트되므로 제외
+      .map((s) => ({
       url: `${SITE_URL}/s/${s.slug}`,
       lastModified: s.publishedAt ? new Date(s.publishedAt) : now,
       changeFrequency: "weekly" as const,
