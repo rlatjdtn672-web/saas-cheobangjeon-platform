@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LabTask, LabModel } from "@/data/lab";
+import type { LabTask } from "@/data/lab";
 
 const VENDOR_COLOR: Record<string, string> = {
   Anthropic: "text-orange-400 bg-orange-400/10",
@@ -16,64 +16,13 @@ function VendorBadge({ vendor }: { vendor: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${c}`}>{vendor || "—"}</span>;
 }
 
-function fmtBytes(n: number) {
-  if (!n) return "—";
-  return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
-}
-
-function ModelCard({ task, m }: { task: LabTask; m: LabModel }) {
-  const [run, setRun] = useState(false);
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between gap-2 px-3.5 py-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-white">{m.name}</span>
-            {m.isClaude && <span title="Anthropic 모델">⭐</span>}
-          </div>
-          <div className="mt-1 flex items-center gap-2">
-            <VendorBadge vendor={m.vendor} />
-            <span className="text-[11px] text-muted">점수 {m.score} · {fmtBytes(m.bytes)}</span>
-          </div>
-        </div>
-        <div className="flex flex-none gap-1.5">
-          <button
-            onClick={() => setRun((v) => !v)}
-            className="rounded-lg bg-accent/15 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/25"
-          >
-            {run ? "■ 닫기" : "▶ 실행"}
-          </button>
-          {m.url && (
-            <a
-              href={m.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted transition hover:text-white"
-            >
-              ↗
-            </a>
-          )}
-        </div>
-      </div>
-      {run && m.url && (
-        <iframe
-          src={m.url}
-          title={`${task.title} — ${m.name}`}
-          sandbox="allow-scripts"
-          className="h-[440px] w-full border-t border-border bg-white"
-        />
-      )}
-    </div>
-  );
-}
-
 export default function LabView({ tasks }: { tasks: LabTask[] }) {
   const [activeKey, setActiveKey] = useState(tasks[0]?.key);
   const [promptOpen, setPromptOpen] = useState(false);
   const task = tasks.find((t) => t.key === activeKey) || tasks[0];
   if (!task) return null;
 
-  const playable = task.models.filter((m) => m.hasFile && m.url);
+  const playableCount = task.models.filter((m) => m.hasFile && m.url).length;
 
   return (
     <div className="relative mx-auto max-w-3xl px-5 pb-24 pt-6">
@@ -107,7 +56,7 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
       {/* 과제 헤더 + 프롬프트 보기 */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-white">
-          {task.emoji} {task.title} · 결과물 {playable.length}개
+          {task.emoji} {task.title} · 결과물 {playableCount}개
         </h2>
         <button
           onClick={() => setPromptOpen(true)}
@@ -118,7 +67,7 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
       </div>
 
       {/* 리더보드 */}
-      <div className="mb-7 overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border text-[11px] uppercase tracking-wide text-muted">
             <tr>
@@ -126,7 +75,7 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
               <th className="px-1 py-2.5 font-medium">모델</th>
               <th className="px-2 py-2.5 font-medium">점수</th>
               <th className="hidden px-2 py-2.5 font-medium sm:table-cell">빌드</th>
-              <th className="px-2 py-2.5 text-right font-medium">결과</th>
+              <th className="px-2 py-2.5 text-right font-medium">플레이</th>
             </tr>
           </thead>
           <tbody>
@@ -154,8 +103,15 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
                   {m.buildS ? `${m.buildS}s` : "—"}
                 </td>
                 <td className="px-2 py-2.5 text-right">
-                  {m.hasFile ? (
-                    <span className="text-[11px] font-medium text-emerald-400">✓ 완성</span>
+                  {m.hasFile && m.url ? (
+                    <a
+                      href={m.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block rounded-lg bg-accent/15 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/25"
+                    >
+                      ▶ Play
+                    </a>
                   ) : (
                     <span className="text-[11px] text-rose-400/80">✗ 실패</span>
                   )}
@@ -165,16 +121,8 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
           </tbody>
         </table>
       </div>
-
-      {/* 플레이 가능한 결과물 */}
-      <h3 className="mb-3 text-sm font-semibold text-white">🎮 결과물 직접 실행해보기</h3>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {playable.map((m) => (
-          <ModelCard key={m.model} task={task} m={m} />
-        ))}
-      </div>
       <p className="mt-4 text-xs text-muted">
-        ▶ 실행을 누르면 해당 모델이 만든 결과물이 그대로 실행됩니다 (방향키/WASD로 조작). 각 결과물은 외부 라이브러리 없이 단일 HTML 파일로 생성됐습니다.
+        ▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). 각 결과물은 외부 라이브러리 없이 단일 HTML 파일로 생성됐습니다.
       </p>
 
       {/* 프롬프트 모달 */}
