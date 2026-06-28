@@ -9,7 +9,6 @@ import ThemeToggle from "./ThemeToggle";
 const TABS = [
   { title: "홈", path: "/" },
   { title: "블로그", path: "/blog" },
-  { title: "리아영어", path: "/english" },
   { title: "SaaS", path: "/saas" },
 ];
 
