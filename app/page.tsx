@@ -88,7 +88,7 @@ export default async function HomePage() {
           >
             <h3 className="text-sm font-semibold text-white">같은 미션, 다른 모델</h3>
             <p className="mt-1 text-xs text-muted">
-              Claude부터 로컬 오픈모델까지 — 동일한 프롬프트로 테트리스·2048·격투게임·크로시 로드를 만들게 한 결과물을 그대로 실행해보고 점수로 비교합니다.
+              Claude부터 로컬 오픈모델까지 — 동일한 프롬프트로 테트리스·2048·스트리트 파이터·길건너 친구들을 만들게 한 결과물을 그대로 실행해보고 직접 테스트한 결과로 비교합니다.
             </p>
           </Link>
         </section>

@@ -23,8 +23,9 @@ function VendorBadge({ vendor }: { vendor: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${c}`}>{vendor || "—"}</span>;
 }
 
-// 전체 요약 매트릭스 (모델 × 과제)
+// 전체 요약 매트릭스 (모델 × 과제) — 클릭하면 펼쳐짐
 function SummaryMatrix({ tasks }: { tasks: LabTask[] }) {
+  const [open, setOpen] = useState(false);
   const byModel: Record<string, { name: string; vendor: string; cells: Record<string, Verdict>; pts: number }> = {};
   tasks.forEach((t) =>
     t.models.forEach((m) => {
@@ -40,49 +41,60 @@ function SummaryMatrix({ tasks }: { tasks: LabTask[] }) {
 
   return (
     <div className="mb-7">
-      <h2 className="mb-2 text-sm font-semibold text-white">📋 전체 요약 — 모델 × 과제</h2>
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border text-[11px] uppercase tracking-wide text-muted">
-            <tr>
-              <th className="px-3.5 py-2.5 font-medium">모델</th>
-              {tasks.map((t) => (
-                <th key={t.key} className="px-2 py-2.5 text-center font-medium" title={t.title}>
-                  {t.emoji}
-                </th>
-              ))}
-              <th className="px-3 py-2.5 text-right font-medium">종합</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.name} className="border-b border-border/60 last:border-0">
-                <td className="px-3.5 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="whitespace-nowrap font-medium text-white">{r.name}</span>
-                    <VendorBadge vendor={r.vendor} />
-                  </div>
-                </td>
-                {tasks.map((t) => {
-                  const v = r.cells[t.key];
-                  return (
-                    <td key={t.key} className="px-2 py-2.5 text-center" title={v ? VERDICT[v].label : ""}>
-                      {v ? VERDICT[v].icon : "—"}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition hover:border-accent/50"
+      >
+        <span className="text-sm font-semibold text-white">📋 전체 요약 — 모델 × 과제</span>
+        <span className="text-xs text-muted">{open ? "접기 ▲" : "펼치기 ▼"}</span>
+      </button>
+
+      {open && (
+        <>
+          <div className="mt-2 overflow-x-auto rounded-xl border border-border bg-card">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border text-[11px] uppercase tracking-wide text-muted">
+                <tr>
+                  <th className="px-3.5 py-2.5 font-medium">모델</th>
+                  {tasks.map((t) => (
+                    <th key={t.key} className="whitespace-nowrap px-3 py-2.5 text-center font-medium">
+                      {t.emoji} {t.title}
+                    </th>
+                  ))}
+                  <th className="px-3 py-2.5 text-right font-medium">종합</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.name} className="border-b border-border/60 last:border-0">
+                    <td className="px-3.5 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="whitespace-nowrap font-medium text-white">{r.name}</span>
+                        <VendorBadge vendor={r.vendor} />
+                      </div>
                     </td>
-                  );
-                })}
-                <td className="px-3 py-2.5 text-right tabular-nums text-zinc-300">{r.pts}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
-        <span>✅ 정상 작동</span>
-        <span>⚠️ 만들었으나 정상 동작 안 함</span>
-        <span>❌ 생성 실패</span>
-        <span className="text-zinc-500">· 종합 = 정상 2점 / 작동이상 1점 / 실패 0점</span>
-      </div>
+                    {tasks.map((t) => {
+                      const v = r.cells[t.key];
+                      return (
+                        <td key={t.key} className="px-3 py-2.5 text-center" title={v ? VERDICT[v].label : ""}>
+                          {v ? VERDICT[v].icon : "—"}
+                        </td>
+                      );
+                    })}
+                    <td className="px-3 py-2.5 text-right tabular-nums text-zinc-300">{r.pts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
+            <span>✅ 정상 작동</span>
+            <span>⚠️ 만들었으나 정상 동작 안 함</span>
+            <span>❌ 생성 실패</span>
+            <span className="text-zinc-500">· 종합 = 정상 2점 / 작동이상 1점 / 실패 0점</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

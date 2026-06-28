@@ -396,7 +396,7 @@ export const LAB_TASKS: LabTask[] = [
   },
   {
     "key": "crossy",
-    "title": "크로시 로드",
+    "title": "길건너 친구들",
     "emoji": "🐸",
     "prompt": "Create a single self-contained file named index.html that implements a \"Crossy Road\" / Frogger-style endless hopper game using only HTML, CSS, and vanilla JavaScript (NO external libraries, NO CDN, NO images - draw with CSS or a <canvas>).\n\nGameplay:\n- The player is a character on a top-down grid of horizontal lanes.\n- Arrow keys and WASD hop the player exactly one cell: Up = forward (toward new lanes), Down = back, Left/Right = sideways. The player cannot leave the left/right edges.\n- Lanes are generated endlessly as the player advances. Lane types: (a) safe grass; (b) road lanes with cars/trucks moving horizontally at varying speeds/directions - touching a vehicle is death; (c) river lanes with logs floating horizontally - the player must stand on a log to cross and is carried along with it; being in water without a log, or carried off the screen edge, is death.\n- The camera scrolls forward as the player advances so new lanes appear ahead; if the player falls too far behind the bottom edge, it is game over.\n- Score = furthest number of lanes advanced; show current score and a best score (localStorage).\n- Smooth movement for vehicles/logs via requestAnimationFrame. Game-over screen with restart (press R or a button).\n\nEverything must live in the one index.html and run by simply opening it in a browser. Make the page focusable so keys work immediately. Use the Write tool to create index.html now. Do not ask any questions.",
     "maxScore": 10,
