@@ -1,6 +1,6 @@
 // 물리 게임 실험 (5호) — Claude 4종(Fable·Opus·Sonnet·Haiku)에게 동일 프롬프트로
 // Matter.js 새총(앵그리버드식) 물리 게임을 만들게 한 결과.
-// ⚠️ verdict(판정)는 임시값 — 직접 테스트 후 갱신 예정.
+// 판정은 직접 테스트 결과 (2026-07-06): Fable ✅ / Opus·Sonnet △ 발사 안됨 / Haiku ❌ 화면 안뜸.
 import type { LabTask } from "@/data/lab";
 
 export const PHYSICS_TASKS: LabTask[] = [
@@ -38,7 +38,8 @@ export const PHYSICS_TASKS: LabTask[] = [
         url: "/lab/physics/opus/index.html",
         isClaude: true,
         features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
-        verdict: "works",
+        verdict: "broken",
+        note: "새총이 발사되지 않음",
       },
       {
         model: "Sonnet",
@@ -52,7 +53,8 @@ export const PHYSICS_TASKS: LabTask[] = [
         url: "/lab/physics/sonnet/index.html",
         isClaude: true,
         features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
-        verdict: "works",
+        verdict: "broken",
+        note: "새총이 발사되지 않음",
       },
       {
         model: "Haiku",
@@ -66,7 +68,8 @@ export const PHYSICS_TASKS: LabTask[] = [
         url: "/lab/physics/haiku/index.html",
         isClaude: true,
         features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
-        verdict: "works",
+        verdict: "fail",
+        note: "화면이 아예 뜨지 않음",
       },
     ],
   },

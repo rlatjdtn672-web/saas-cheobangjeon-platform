@@ -1,5 +1,5 @@
 // 자동 생성 (LLM eval 결과). 모델별 게임 결과물 + 점수 + 프롬프트.
-export type LabModel = { model: string; name: string; vendor: string; score: number; buildS: number; bytes: number; playable: boolean; hasFile: boolean; url: string | null; isClaude: boolean; features: Record<string, boolean>; verdict: "works" | "broken" | "fail" };
+export type LabModel = { model: string; name: string; vendor: string; score: number; buildS: number; bytes: number; playable: boolean; hasFile: boolean; url: string | null; isClaude: boolean; features: Record<string, boolean>; verdict: "works" | "broken" | "fail"; note?: string };
 export type LabTask = { key: string; title: string; emoji: string; prompt: string; maxScore: number; models: LabModel[] };
 export const LAB_TASKS: LabTask[] = [
   {

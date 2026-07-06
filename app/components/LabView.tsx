@@ -104,12 +104,19 @@ export default function LabView({
   title = "🧪 AI 모델 실험실",
   desc = "같은 미션, 다른 모델. 클로드부터 로컬 오픈모델까지 — 동일한 프롬프트 하나로 게임을 만들게 시키고, 직접 다 돌려본 결과를 그대로 비교합니다.",
   note = "▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). ⚠️ 표시는 결과물이 만들어졌지만 실제로는 제대로 동작하지 않은 경우로, 직접 눌러서 확인해볼 수 있습니다.",
+  showSummary = true,
+  showScore = true,
+  verdictIcons,
 }: {
   tasks: LabTask[];
   title?: string;
   desc?: string;
   note?: string;
+  showSummary?: boolean;
+  showScore?: boolean;
+  verdictIcons?: Partial<Record<Verdict, string>>;
 }) {
+  const icon = (v: Verdict) => verdictIcons?.[v] ?? VERDICT[v].icon;
   const [activeKey, setActiveKey] = useState(tasks[0]?.key);
   const [promptOpen, setPromptOpen] = useState(false);
   const task = tasks.find((t) => t.key === activeKey) || tasks[0];
@@ -125,7 +132,7 @@ export default function LabView({
         <p className="mt-1.5 text-sm text-muted">{desc}</p>
       </header>
 
-      <SummaryMatrix tasks={tasks} />
+      {showSummary && <SummaryMatrix tasks={tasks} />}
 
       {/* 과제 탭 */}
       <div className="mb-5 flex flex-wrap gap-2">
@@ -152,7 +159,7 @@ export default function LabView({
         <h2 className="text-lg font-semibold text-white">
           {task.emoji} {task.title}{" "}
           <span className="ml-1 text-sm font-normal text-muted">
-            ✅ {counts.works} · ⚠️ {counts.broken} · ❌ {counts.fail}
+            {icon("works")} {counts.works} · {icon("broken")} {counts.broken} · {icon("fail")} {counts.fail}
           </span>
         </h2>
         <button
@@ -171,7 +178,7 @@ export default function LabView({
               <th className="px-3.5 py-2.5 font-medium">#</th>
               <th className="px-1 py-2.5 font-medium">모델</th>
               <th className="px-2 py-2.5 font-medium">판정</th>
-              <th className="hidden px-2 py-2.5 font-medium sm:table-cell">점수</th>
+              {showScore && <th className="hidden px-2 py-2.5 font-medium sm:table-cell">점수</th>}
               <th className="hidden px-2 py-2.5 font-medium md:table-cell">빌드</th>
               <th className="px-2 py-2.5 text-right font-medium">플레이</th>
             </tr>
@@ -189,21 +196,30 @@ export default function LabView({
                     </div>
                   </td>
                   <td className={`px-2 py-2.5 ${v.cls}`}>
-                    <span className="whitespace-nowrap">
-                      {v.icon} <span className="hidden text-xs sm:inline">{v.label}</span>
-                    </span>
+                    {m.note ? (
+                      <span>
+                        {icon(m.verdict as Verdict)} <span className="text-xs">{m.note}</span>
+                      </span>
+                    ) : (
+                      <span className="whitespace-nowrap">
+                        {icon(m.verdict as Verdict)}{" "}
+                        <span className="hidden text-xs sm:inline">{v.label}</span>
+                      </span>
+                    )}
                   </td>
-                  <td className="hidden px-2 py-2.5 sm:table-cell">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-accent"
-                          style={{ width: `${Math.round((m.score / task.maxScore) * 100)}%` }}
-                        />
+                  {showScore && (
+                    <td className="hidden px-2 py-2.5 sm:table-cell">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="h-full rounded-full bg-accent"
+                            style={{ width: `${Math.round((m.score / task.maxScore) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="tabular-nums text-zinc-300">{m.score}</span>
                       </div>
-                      <span className="tabular-nums text-zinc-300">{m.score}</span>
-                    </div>
-                  </td>
+                    </td>
+                  )}
                   <td className="hidden px-2 py-2.5 tabular-nums text-muted md:table-cell">
                     {m.buildS ? `${m.buildS}s` : "—"}
                   </td>
