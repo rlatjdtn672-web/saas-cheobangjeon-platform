@@ -20,6 +20,25 @@ export const NEWSLETTER = {
 
 export const SEED_SAAS: Saas[] = [
   {
+    id: "physics-lab",
+    slug: "physics-lab",
+    name: "물리 게임 실험실",
+    tagline:
+      "Claude 4종(Fable·Opus·Sonnet·Haiku)에게 같은 프롬프트로 Matter.js 새총 물리 게임을 만들게 시켰다. 조준선·사운드·파티클까지 — 누가 가장 완성도 높은 물리 게임을 만들까?",
+    description:
+      "Claude 4종 × 물리 게임 벤치마크. 각 모델의 결과물을 직접 플레이해보고 비교. (판정은 직접 테스트 후 업데이트 예정)",
+    category: "AI / 벤치마크",
+    pricing: "오픈",
+    websiteUrl: "https://seungsu.com/s/physics-lab",
+    links: [],
+    reviewTitle: "물리 게임 실험실 — Claude 4종 비교",
+    reviewUrl:
+      "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
+    publishedAt: "2026-07-06",
+    issueNo: "5호",
+    featured: true,
+  },
+  {
     id: "ai-lab",
     slug: "ai-lab",
     name: "AI 모델 실험실",

@@ -99,7 +99,17 @@ function SummaryMatrix({ tasks }: { tasks: LabTask[] }) {
   );
 }
 
-export default function LabView({ tasks }: { tasks: LabTask[] }) {
+export default function LabView({
+  tasks,
+  title = "🧪 AI 모델 실험실",
+  desc = "같은 미션, 다른 모델. 클로드부터 로컬 오픈모델까지 — 동일한 프롬프트 하나로 게임을 만들게 시키고, 직접 다 돌려본 결과를 그대로 비교합니다.",
+  note = "▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). ⚠️ 표시는 결과물이 만들어졌지만 실제로는 제대로 동작하지 않은 경우로, 직접 눌러서 확인해볼 수 있습니다.",
+}: {
+  tasks: LabTask[];
+  title?: string;
+  desc?: string;
+  note?: string;
+}) {
   const [activeKey, setActiveKey] = useState(tasks[0]?.key);
   const [promptOpen, setPromptOpen] = useState(false);
   const task = tasks.find((t) => t.key === activeKey) || tasks[0];
@@ -111,10 +121,8 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
   return (
     <div className="relative mx-auto max-w-3xl px-5 pb-24 pt-6">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold text-white">🧪 AI 모델 실험실</h1>
-        <p className="mt-1.5 text-sm text-muted">
-          같은 미션, 다른 모델. 클로드부터 로컬 오픈모델까지 — 동일한 프롬프트 하나로 게임을 만들게 시키고, 직접 다 돌려본 결과를 그대로 비교합니다.
-        </p>
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
+        <p className="mt-1.5 text-sm text-muted">{desc}</p>
       </header>
 
       <SummaryMatrix tasks={tasks} />
@@ -219,9 +227,7 @@ export default function LabView({ tasks }: { tasks: LabTask[] }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-xs text-muted">
-        ▶ Play를 누르면 해당 모델이 만든 결과물이 새 페이지에서 그대로 실행됩니다 (방향키/WASD로 조작). ⚠️ 표시는 결과물이 만들어졌지만 실제로는 제대로 동작하지 않은 경우로, 직접 눌러서 확인해볼 수 있습니다.
-      </p>
+      <p className="mt-4 text-xs text-muted">{note}</p>
 
       {/* 프롬프트 모달 */}
       {promptOpen && (

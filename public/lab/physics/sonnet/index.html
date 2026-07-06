@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Angry Birds Physics Benchmark</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #7ec8f2 0%, #bfe6fb 55%, #d9f2c4 100%);
+    font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+  }
+
+  #gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  #hud {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 3px solid #4a3220;
+    border-radius: 10px;
+    padding: 10px 18px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    z-index: 10;
+    min-width: 180px;
+  }
+
+  #hud h1 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    color: #4a3220;
+    letter-spacing: 1px;
+  }
+
+  #hud .row {
+    font-size: 16px;
+    font-weight: bold;
+    color: #33210f;
+    margin: 2px 0;
+  }
+
+  #score {
+    color: #d1470f;
+  }
+
+  #shots {
+    color: #1a5fb4;
+  }
+
+  #targets {
+    color: #1c7c1c;
+  }
+
+  #message {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 235, 150, 0.95);
+    border: 3px solid #b8860b;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #6b4a00;
+    z-index: 10;
+    display: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+
+  #controls {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 3px solid #4a3220;
+    background: linear-gradient(to bottom, #ffd15c, #ff9d1f);
+    color: #4a2a00;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    transition: transform 0.05s ease-in-out;
+  }
+
+  button:hover {
+    filter: brightness(1.08);
+  }
+
+  button:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  #restartBtn {
+    background: linear-gradient(to bottom, #8fe38f, #43b143);
+  }
+
+  #instructions {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.75);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #33210f;
+    z-index: 10;
+    text-align: center;
+  }
+
+  #gameOverOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 20;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #gameOverBox {
+    background: #fff8e7;
+    border: 4px solid #4a3220;
+    border-radius: 16px;
+    padding: 30px 50px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  #gameOverBox h2 {
+    margin: 0 0 10px 0;
+    color: #d1470f;
+    font-size: 30px;
+  }
+
+  #gameOverBox p {
+    font-size: 18px;
+    color: #33210f;
+    margin: 6px 0 18px 0;
+  }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+  <div id="hud">
+    <h1>ANGRY BLOCKS</h1>
+    <div class="row" id="score">Score: 0</div>
+    <div class="row" id="shots">Birds left: 5</div>
+    <div class="row" id="targets">Pigs left: 3</div>
+  </div>
+
+  <div id="message"></div>
+
+  <div id="controls">
+    <button id="nextBtn">Next Shot ▶</button>
+    <button id="restartBtn">Reset Level ⟳</button>
+  </div>
+
+  <div id="instructions">Drag the bird back from the slingshot and release to launch. Knock down all the pigs!</div>
+
+  <div id="gameOverOverlay">
+    <div id="gameOverBox">
+      <h2 id="gameOverTitle">Level Complete!</h2>
+      <p id="gameOverText">Final Score: 0</p>
+      <button id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Matter.js module aliases ----------
+  var Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      World = Matter.World,
+      Bodies = Matter.Bodies,
+      Body = Matter.Body,
+      Composite = Matter.Composite,
+      Constraint = Matter.Constraint,
+      Mouse = Matter.Mouse,
+      MouseConstraint = Matter.MouseConstraint,
+      Events = Matter.Events,
+      Vector = Matter.Vector;
+
+  // ---------- Canvas sizing ----------
+  var WIDTH = window.innerWidth;
+  var HEIGHT = window.innerHeight;
+  var GROUND_H = 60;
+
+  // ---------- Engine / World ----------
+  var engine = Engine.create();
+  var world = engine.world;
+  engine.gravity.y = 1;
+
+  var render = Render.create({
+    element: document.getElementById('gameContainer'),
+    engine: engine,
+    options: {
+      width: WIDTH,
+      height: HEIGHT,
+      wireframes: false,
+      background: 'transparent'
+    }
+  });
+  Render.run(render);
+
+  var runner = Runner.create();
+  Runner.run(runner, engine);
+
+  // ---------- Slingshot geometry ----------
+  var slingX = Math.max(160, WIDTH * 0.15);
+  var slingY = HEIGHT - GROUND_H - 150;
+  var anchor = { x: slingX, y: slingY };
+  var birdRadius = 22;
+
+  // ---------- Static world bounds ----------
+  var wallThickness = 60;
+  var ground = Bodies.rectangle(WIDTH / 2, HEIGHT - GROUND_H / 2, WIDTH * 2, GROUND_H, {
+    isStatic: true,
+    friction: 1,
+    render: { fillStyle: '#5b3a1e' }
+  });
+  var leftWall = Bodies.rectangle(-wallThickness / 2, HEIGHT / 2, wallThickness, HEIGHT * 2, {
+    isStatic: true,
+    render: { visible: false }
+  });
+  var rightWall = Bodies.rectangle(WIDTH + wallThickness / 2, HEIGHT / 2, wallThickness, HEIGHT * 2, {
+    isStatic: true,
+    render: { visible: false }
+  });
+  var ceiling = Bodies.rectangle(WIDTH / 2, -wallThickness / 2 - 200, WIDTH * 2, wallThickness, {
+    isStatic: true,
+    render: { visible: false }
+  });
+
+  World.add(world, [ground, leftWall, rightWall, ceiling]);
+
+  // ---------- Slingshot posts (visual, static) ----------
+  var postWidth = 14;
+  var postHeight = 140;
+  var postBack = Bodies.rectangle(slingX, HEIGHT - GROUND_H - postHeight / 2 + 10, postWidth, postHeight, {
+    isStatic: true,
+    render: { fillStyle: '#6b4423' }
+  });
+  World.add(world, postBack);
+
+  // ---------- Ground decoration (grass strip) ----------
+  // handled via custom render below
+
+  // ---------- Game state ----------
+  var score = 0;
+  var totalShots = 5;
+  var shotsLeft = totalShots;
+  var bird = null;
+  var slingConstraint = null;
+  var birdLaunched = false;
+  var pigs = [];
+  var blocks = [];
+  var gameOver = false;
+  var settling = false;
+
+  var scoreEl = document.getElementById('score');
+  var shotsEl = document.getElementById('shots');
+  var targetsEl = document.getElementById('targets');
+  var messageEl = document.getElementById('message');
+  var overlay = document.getElementById('gameOverOverlay');
+  var gameOverTitle = document.getElementById('gameOverTitle');
+  var gameOverText = document.getElementById('gameOverText');
+
+  function updateHUD() {
+    scoreEl.textContent = 'Score: ' + score;
+    shotsEl.textContent = 'Birds left: ' + Math.max(0, shotsLeft);
+    var remaining = pigs.filter(function (p) { return !p.isDestroyed; }).length;
+    targetsEl.textContent = 'Pigs left: ' + remaining;
+  }
+
+  function showMessage(text, ms) {
+    messageEl.textContent = text;
+    messageEl.style.display = 'block';
+    clearTimeout(showMessage._t);
+    showMessage._t = setTimeout(function () {
+      messageEl.style.display = 'none';
+    }, ms || 1600);
+  }
+
+  // ---------- Build tower + pigs ----------
+  var towerBaseX = WIDTH * 0.72;
+  var groundY = HEIGHT - GROUND_H;
+
+  function makePig(x, y, r) {
+    var pig = Bodies.circle(x, y, r || 24, {
+      density: 0.0025,
+      friction: 0.6,
+      frictionAir: 0.001,
+      restitution: 0.3,
+      render: {
+        fillStyle: '#7ec850',
+        strokeStyle: '#4a7a2a',
+        lineWidth: 3
+      },
+      label: 'pig'
+    });
+    pig.isDestroyed = false;
+    pig.hitVelocityThreshold = 6.5;
+    return pig;
+  }
+
+  function makeBlock(x, y, w, h) {
+    var block = Bodies.rectangle(x, y, w, h, {
+      density: 0.0018,
+      friction: 0.5,
+      frictionAir: 0.0005,
+      restitution: 0.05,
+      render: {
+        fillStyle: '#c98a4b',
+        strokeStyle: '#8a5a2b',
+        lineWidth: 2
+      },
+      label: 'block'
+    });
+    return block;
+  }
+
+  function buildLevel() {
+    // remove old dynamic bodies except bird system
+    blocks.forEach(function (b) { Composite.remove(world, b); });
+    pigs.forEach(function (p) { Composite.remove(world, p); });
+    blocks = [];
+    pigs = [];
+
+    var blockW = 30, blockH = 90;
+
+    // Tower structure: two vertical columns with a horizontal beam, stacked twice, plus a top block
+    var col1X = towerBaseX - 70;
+    var col2X = towerBaseX + 70;
+
+    // Level 1 columns
+    var b1 = makeBlock(col1X, groundY - blockH / 2, blockW, blockH);
+    var b2 = makeBlock(col2X, groundY - blockH / 2, blockW, blockH);
+    // Level 1 beam
+    var beam1 = makeBlock(towerBaseX, groundY - blockH - 10, 190, 20);
+
+    // Level 2 columns
+    var b3 = makeBlock(col1X, groundY - blockH * 1.5 - 20, blockW, blockH);
+    var b4 = makeBlock(col2X, groundY - blockH * 1.5 - 20, blockW, blockH);
+    // Level 2 beam
+    var beam2 = makeBlock(towerBaseX, groundY - blockH * 2 - 30, 190, 20);
+
+    // Small roof block
+    var roof = makeBlock(towerBaseX, groundY - blockH * 2 - 55, 100, 30);
+
+    blocks = [b1, b2, beam1, b3, b4, beam2, roof];
+    World.add(world, blocks);
+
+    // Pigs: one between columns on ground, one on level-1 beam, one on level-2 beam
+    var pig1 = makePig(towerBaseX, groundY - 24, 24);
+    var pig2 = makePig(towerBaseX, groundY - blockH - 10 - 20 - 24, 22);
+    var pig3 = makePig(col1X + 100, groundY - blockH * 2 - 30 - 24, 20);
+
+    pigs = [pig1, pig2, pig3];
+    World.add(world, pigs);
+
+    updateHUD();
+  }
+
+  // ---------- Bird / slingshot ----------
+  function spawnBird() {
+    if (bird) {
+      Composite.remove(world, bird);
+    }
+    if (slingConstraint) {
+      Composite.remove(world, slingConstraint);
+    }
+    bird = Bodies.circle(anchor.x, anchor.y, birdRadius, {
+      density: 0.006,
+      friction: 0.6,
+      frictionAir: 0.0005,
+      restitution: 0.4,
+      render: {
+        fillStyle: '#e63b3b',
+        strokeStyle: '#8a1414',
+        lineWidth: 3
+      },
+      label: 'bird'
+    });
+    World.add(world, bird);
+
+    slingConstraint = Constraint.create({
+      pointA: anchor,
+      bodyB: bird,
+      stiffness: 0.045,
+      damping: 0.02,
+      length: 0
+    });
+    World.add(world, slingConstraint);
+    birdLaunched = false;
+  }
+
+  // ---------- Mouse control ----------
+  var mouse = Mouse.create(render.canvas);
+  var mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: {
+      stiffness: 0.2,
+      render: { visible: false }
+    }
+  });
+  World.add(world, mouseConstraint);
+  render.mouse = mouse;
+
+  var MAX_PULL = 140;
+
+  Events.on(mouseConstraint, 'startdrag', function (e) {
+    // only allow dragging the current bird before launch
+    if (e.body !== bird || birdLaunched) return;
+  });
+
+  Events.on(engine, 'beforeUpdate', function () {
+    if (bird && !birdLaunched && mouseConstraint.body === bird) {
+      // clamp pull distance
+      var dx = bird.position.x - anchor.x;
+      var dy = bird.position.y - anchor.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > MAX_PULL) {
+        var scale = MAX_PULL / dist;
+        Body.setPosition(bird, {
+          x: anchor.x + dx * scale,
+          y: anchor.y + dy * scale
+        });
+      }
+    }
+  });
+
+  Events.on(mouseConstraint, 'enddrag', function (e) {
+    if (e.body === bird && !birdLaunched) {
+      birdLaunched = true;
+      shotsLeft -= 1;
+      updateHUD();
+      // detach the sling after the elastic snaps back a bit later
+      setTimeout(function () {
+        if (slingConstraint) {
+          Composite.remove(world, slingConstraint);
+          slingConstraint = null;
+        }
+      }, 500);
+      checkForRoundEndLater();
+    }
+  });
+
+  // ---------- Scoring: detect pig destruction ----------
+  Events.on(engine, 'collisionStart', function (event) {
+    event.pairs.forEach(function (pair) {
+      [pair.bodyA, pair.bodyB].forEach(function (body) {
+        if (body.label === 'pig' && !body.isDestroyed) {
+          var relSpeed = Vector.magnitude(body.velocity);
+          var other = body === pair.bodyA ? pair.bodyB : pair.bodyA;
+          var otherSpeed = Vector.magnitude(other.velocity);
+          var impact = Math.max(relSpeed, otherSpeed);
+          if ((other.label === 'bird' || other.label === 'block') && impact > body.hitVelocityThreshold) {
+            destroyPig(body);
+          }
+        }
+      });
+    });
+  });
+
+  function destroyPig(pig) {
+    if (pig.isDestroyed) return;
+    pig.isDestroyed = true;
+    score += 100;
+    Composite.remove(world, pig);
+    showMessage('Pig popped! +100', 1200);
+    updateHUD();
+    checkWin();
+  }
+
+  // Also award small points for toppled blocks (angle change) - track once per block
+  blocks.forEach(function () {});
+  var toppleAwarded = new WeakMap ? new WeakMap() : null;
+
+  function checkToppled() {
+    blocks.forEach(function (b) {
+      if (b.isDestroyed) return;
+      var angle = Math.abs(b.angle % (Math.PI * 2));
+      if (angle > 0.6 && angle < (Math.PI * 2 - 0.6)) {
+        if (!b.toppleScored) {
+          b.toppleScored = true;
+          score += 10;
+          updateHUD();
+        }
+      }
+    });
+  }
+
+  Events.on(engine, 'afterUpdate', function () {
+    checkToppled();
+    // Remove bodies that fall way off world (cleanup)
+    Composite.allBodies(world).forEach(function (b) {
+      if (!b.isStatic && b.position.y > HEIGHT + 400) {
+        if (b.label === 'pig' && !b.isDestroyed) {
+          destroyPig(b);
+        } else if (b.label === 'bird') {
+          // bird fell off, allow next shot
+        }
+      }
+    });
+  });
+
+  // ---------- Win / lose conditions ----------
+  function checkWin() {
+    var remaining = pigs.filter(function (p) { return !p.isDestroyed; }).length;
+    if (remaining === 0 && !gameOver) {
+      gameOver = true;
+      var bonus = shotsLeft * 50;
+      score += bonus;
+      updateHUD();
+      setTimeout(function () {
+        gameOverTitle.textContent = 'Level Complete!';
+        gameOverText.textContent = 'Final Score: ' + score + ' (bonus +' + bonus + ' for ' + shotsLeft + ' birds left)';
+        overlay.style.display = 'flex';
+      }, 600);
+    }
+  }
+
+  function checkForRoundEndLater() {
+    setTimeout(function () {
+      var remaining = pigs.filter(function (p) { return !p.isDestroyed; }).length;
+      if (remaining > 0 && shotsLeft <= 0 && !gameOver) {
+        gameOver = true;
+        gameOverTitle.textContent = 'Out of Birds!';
+        gameOverText.textContent = 'Final Score: ' + score + '. ' + remaining + ' pig(s) survived.';
+        overlay.style.display = 'flex';
+      }
+    }, 3500);
+  }
+
+  // ---------- Buttons ----------
+  document.getElementById('nextBtn').addEventListener('click', function () {
+    if (gameOver) return;
+    if (shotsLeft <= 0) {
+      showMessage('No birds left! Reset to try again.', 1800);
+      return;
+    }
+    if (bird && !birdLaunched) {
+      showMessage('Launch your current bird first!', 1500);
+      return;
+    }
+    spawnBird();
+    showMessage('Bird ready — drag & release!', 1500);
+  });
+
+  document.getElementById('restartBtn').addEventListener('click', resetGame);
+  document.getElementById('playAgainBtn').addEventListener('click', resetGame);
+
+  function resetGame() {
+    score = 0;
+    shotsLeft = totalShots;
+    gameOver = false;
+    overlay.style.display = 'none';
+    buildLevel();
+    spawnBird();
+    updateHUD();
+    showMessage('New round! Drag the bird to launch.', 2000);
+  }
+
+  // ---------- Custom background rendering (sky already via CSS; draw slingshot band + ground grass) ----------
+  Events.on(render, 'afterRender', function () {
+    var ctx = render.context;
+    ctx.save();
+
+    // Grass strip on top of ground
+    ctx.fillStyle = '#5fae3d';
+    ctx.fillRect(0, HEIGHT - GROUND_H - 6, WIDTH, 10);
+
+    // Slingshot front post + rubber bands
+    var frontPostX = slingX + 26;
+    ctx.strokeStyle = '#6b4423';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(frontPostX, HEIGHT - GROUND_H + 10);
+    ctx.lineTo(frontPostX, HEIGHT - GROUND_H - 130);
+    ctx.stroke();
+
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(slingX, HEIGHT - GROUND_H + 10);
+    ctx.lineTo(slingX, HEIGHT - GROUND_H - 130);
+    ctx.stroke();
+
+    // Rubber bands from both posts to bird
+    if (bird) {
+      ctx.strokeStyle = '#3a2a1a';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(slingX, HEIGHT - GROUND_H - 130);
+      ctx.lineTo(bird.position.x, bird.position.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(frontPostX, HEIGHT - GROUND_H - 130);
+      ctx.lineTo(bird.position.x, bird.position.y);
+      ctx.stroke();
+
+      // trajectory hint while dragging
+      if (!birdLaunched && mouseConstraint.body === bird) {
+        var dx = anchor.x - bird.position.x;
+        var dy = anchor.y - bird.position.y;
+        ctx.setLineDash([6, 8]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        var px = bird.position.x, py = bird.position.y;
+        var vx = dx * 0.09, vy = dy * 0.09;
+        ctx.moveTo(px, py);
+        for (var i = 0; i < 18; i++) {
+          vy += 0.5;
+          px += vx;
+          py += vy;
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Pig faces (simple eyes) drawn on top of matter render
+    pigs.forEach(function (p) {
+      if (p.isDestroyed) return;
+      var r = p.circleRadius || 22;
+      ctx.save();
+      ctx.translate(p.position.x, p.position.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(-r * 0.35, -r * 0.15, r * 0.22, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r * 0.35, -r * 0.15, r * 0.22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.arc(-r * 0.35, -r * 0.15, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r * 0.35, -r * 0.15, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e07a9a';
+      ctx.beginPath(); ctx.ellipse(0, r * 0.25, r * 0.28, r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+
+    ctx.restore();
+  });
+
+  // ---------- Handle window resize (keep simple: reload layout not required for playability) ----------
+  window.addEventListener('resize', function () {
+    render.canvas.width = window.innerWidth;
+    render.canvas.height = window.innerHeight;
+    render.options.width = window.innerWidth;
+    render.options.height = window.innerHeight;
+  });
+
+  // ---------- Init ----------
+  buildLevel();
+  spawnBird();
+  updateHUD();
+  showMessage('Drag the bird back and release to launch!', 2500);
+
+})();
+</script>
+</body>
+</html>

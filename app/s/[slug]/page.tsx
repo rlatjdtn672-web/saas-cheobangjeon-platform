@@ -12,6 +12,7 @@ import EditPanel from "@/app/components/EditPanel";
 import SiteHeader from "@/app/components/SiteHeader";
 import LabView from "@/app/components/LabView";
 import { LAB_TASKS } from "@/data/lab";
+import { PHYSICS_TASKS } from "@/data/physics";
 
 import type { Saas, SaasButton, ButtonKind } from "@/lib/types";
 
@@ -66,6 +67,23 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
         <SiteHeader />
         <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
         <LabView tasks={LAB_TASKS} />
+      </main>
+    );
+  }
+
+  // 물리 게임 실험실(5호) — Claude 4종 비교, 동일 구조
+  if (params.slug === "physics-lab") {
+    return (
+      <main className="relative">
+        <PageViewTracker type="saas_view" saasId="physics-lab" />
+        <SiteHeader />
+        <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
+        <LabView
+          tasks={PHYSICS_TASKS}
+          title="🎯 물리 게임 실험실 — Claude 4종"
+          desc="Fable·Opus·Sonnet·Haiku에게 동일한 프롬프트로 Matter.js 새총(앵그리버드식) 물리 게임을 만들게 시키고 결과물을 그대로 비교합니다. 마우스로 새총을 당겨 발사해보세요."
+          note="▶ Play를 누르면 해당 모델이 만든 게임이 새 페이지에서 실행됩니다 (마우스 드래그로 새총 발사). Matter.js CDN을 쓰므로 인터넷 연결이 필요합니다. 판정·표 내용은 직접 테스트 후 업데이트 예정."
+        />
       </main>
     );
   }

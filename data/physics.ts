@@ -1,0 +1,73 @@
+// 물리 게임 실험 (5호) — Claude 4종(Fable·Opus·Sonnet·Haiku)에게 동일 프롬프트로
+// Matter.js 새총(앵그리버드식) 물리 게임을 만들게 한 결과.
+// ⚠️ verdict(판정)는 임시값 — 직접 테스트 후 갱신 예정.
+import type { LabTask } from "@/data/lab";
+
+export const PHYSICS_TASKS: LabTask[] = [
+  {
+    key: "physics",
+    title: "물리 게임 (새총 슬링샷)",
+    emoji: "🎯",
+    prompt:
+      "앵그리버드식 물리 게임 (Matter.js). 새총 드래그 발사 → 블록탑/돼지를 물리로 무너뜨림. 점수·리셋. 단일 index.html, Matter.js CDN 허용.",
+    maxScore: 8,
+    models: [
+      {
+        model: "Fable",
+        name: "Claude Fable 5",
+        vendor: "Anthropic",
+        score: 8,
+        buildS: 233,
+        bytes: 23680,
+        playable: true,
+        hasFile: true,
+        url: "/lab/physics/fable/index.html",
+        isClaude: true,
+        features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, sound: true, particles: true, ammo_levels: true },
+        verdict: "works",
+      },
+      {
+        model: "Opus",
+        name: "Claude Opus 4.8",
+        vendor: "Anthropic",
+        score: 8,
+        buildS: 81,
+        bytes: 15637,
+        playable: true,
+        hasFile: true,
+        url: "/lab/physics/opus/index.html",
+        isClaude: true,
+        features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
+        verdict: "works",
+      },
+      {
+        model: "Sonnet",
+        name: "Claude Sonnet 4.6",
+        vendor: "Anthropic",
+        score: 8,
+        buildS: 76,
+        bytes: 19130,
+        playable: true,
+        hasFile: true,
+        url: "/lab/physics/sonnet/index.html",
+        isClaude: true,
+        features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
+        verdict: "works",
+      },
+      {
+        model: "Haiku",
+        name: "Claude Haiku 4.5",
+        vendor: "Anthropic",
+        score: 8,
+        buildS: 45,
+        bytes: 16345,
+        playable: true,
+        hasFile: true,
+        url: "/lab/physics/haiku/index.html",
+        isClaude: true,
+        features: { aim_line: true, drag_line: true, physics_tuning: true, win_lose: true, ammo_levels: true },
+        verdict: "works",
+      },
+    ],
+  },
+];

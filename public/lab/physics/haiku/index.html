@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angry Birds Physics Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: linear-gradient(to bottom, #87ceeb 0%, #e0f6ff 100%);
+        }
+
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 14px;
+            color: #666;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 10;
+            max-width: 200px;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #resetBtn {
+            background: #ff6b6b;
+        }
+
+        #resetBtn:hover {
+            background: #ee5a52;
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        #gameOverScreen.show {
+            display: flex;
+        }
+
+        #gameOverText {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #gameOverScore {
+            color: #ffeb3b;
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+
+        #playAgainBtn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #playAgainBtn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hud">Score: <span id="score">0</span></div>
+        <div id="instructions">
+            <div>Drag bird back to aim</div>
+            <div>Release to launch</div>
+            <div>Knock down pigs!</div>
+        </div>
+        <div id="controls">
+            <button id="nextShotBtn">Next Shot</button>
+            <button id="resetBtn">Reset Game</button>
+        </div>
+        <div id="gameOverScreen">
+            <div id="gameOverText">Level Complete!</div>
+            <div id="gameOverScore">Final Score: <span id="finalScore">0</span></div>
+            <button id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <script>
+        // Matter.js aliases
+        const Engine = Matter.Engine;
+        const World = Matter.World;
+        const Body = Matter.Body;
+        const Bodies = Matter.Bodies;
+        const Events = Matter.Events;
+        const Body_setPosition = Body.setPosition;
+        const Constraint = Matter.Constraint;
+        const Composite = Matter.Composite;
+
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = 1000;
+        const height = 600;
+        canvas.width = width;
+        canvas.height = height;
+
+        // Game variables
+        let engine;
+        let world;
+        let score = 0;
+        let targetsPigsHit = 0;
+        let targetsSpawned = 3;
+        let shotsTaken = 0;
+        let maxShots = 3;
+        let gameOver = false;
+        let currentBall = null;
+        let slingConstraint = null;
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let allBodies = [];
+        let targetsRemaining = 0;
+
+        // Physics configuration
+        function initGame() {
+            // Create engine
+            engine = Engine.create();
+            world = engine.world;
+            world.gravity.y = 1;
+
+            // Clear all bodies
+            allBodies = [];
+            score = 0;
+            targetsPigsHit = 0;
+            shotsTaken = 0;
+            gameOver = false;
+
+            // Create boundaries
+            const wallThickness = 60;
+            const groundBody = Bodies.rectangle(width / 2, height + wallThickness / 2, width + 2 * wallThickness, wallThickness, { isStatic: true });
+            const leftWall = Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height + 2 * wallThickness, { isStatic: true });
+            const rightWall = Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height + 2 * wallThickness, { isStatic: true });
+
+            World.add(world, [groundBody, leftWall, rightWall]);
+            allBodies.push(groundBody, leftWall, rightWall);
+
+            // Create slingshot base
+            const slingshotBaseX = 120;
+            const slingshotBaseY = height - 100;
+            const slingshotBase = Bodies.rectangle(slingshotBaseX, slingshotBaseY, 30, 80, { isStatic: true, label: 'slingshot' });
+            World.add(world, slingshotBase);
+            allBodies.push(slingshotBase);
+
+            // Create initial ball
+            createBall(slingshotBaseX, slingshotBaseY - 80);
+
+            // Create tower structure on the right
+            const towerX = width - 200;
+            const towerY = height - 100;
+
+            // Base layer
+            const blockW = 50, blockH = 40;
+            const block1 = Bodies.rectangle(towerX - 50, towerY, blockW, blockH, { friction: 0.5, restitution: 0.4 });
+            const block2 = Bodies.rectangle(towerX + 50, towerY, blockW, blockH, { friction: 0.5, restitution: 0.4 });
+
+            // Middle layer
+            const block3 = Bodies.rectangle(towerX, towerY - 50, blockW, blockH, { friction: 0.5, restitution: 0.4 });
+
+            // Top pigs
+            const pig1 = Bodies.circle(towerX - 40, towerY - 120, 15, { friction: 0.3, restitution: 0.6, label: 'pig' });
+            const pig2 = Bodies.circle(towerX + 40, towerY - 120, 15, { friction: 0.3, restitution: 0.6, label: 'pig' });
+            const pig3 = Bodies.circle(towerX, towerY - 180, 15, { friction: 0.3, restitution: 0.6, label: 'pig' });
+
+            World.add(world, [block1, block2, block3, pig1, pig2, pig3]);
+            allBodies.push(block1, block2, block3, pig1, pig2, pig3);
+
+            targetsRemaining = 3;
+
+            // Setup mouse tracking
+            setupMouseControls();
+
+            // Update score display
+            updateScoreDisplay();
+        }
+
+        function createBall(x, y) {
+            if (currentBall) {
+                World.remove(world, currentBall);
+            }
+            currentBall = Bodies.circle(x, y, 12, {
+                friction: 0.3,
+                restitution: 0.8,
+                label: 'projectile',
+                density: 0.04
+            });
+            World.add(world, currentBall);
+            allBodies.push(currentBall);
+
+            // Create slingshot constraint
+            if (slingConstraint) {
+                World.remove(world, slingConstraint);
+            }
+            slingConstraint = Constraint.create({
+                bodyA: { x: 120, y: height - 100 - 80 },
+                bodyB: currentBall,
+                length: 0,
+                stiffness: 0.08,
+                isRemoved: false
+            });
+            World.add(world, slingConstraint);
+        }
+
+        function setupMouseControls() {
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                if (!currentBall || shotsTaken >= maxShots) return;
+
+                const dx = currentBall.position.x - mouseX;
+                const dy = currentBall.position.y - mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 30) {
+                    isDragging = true;
+                    dragStart = { x: mouseX, y: mouseY };
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDragging || !currentBall) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                Body_setPosition(currentBall, { x: mouseX, y: mouseY });
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                if (isDragging && currentBall) {
+                    isDragging = false;
+
+                    // Calculate launch velocity
+                    const rect = canvas.getBoundingClientRect();
+                    const launchX = currentBall.position.x - dragStart.x;
+                    const launchY = currentBall.position.y - dragStart.y;
+
+                    Body.setVelocity(currentBall, { x: -launchX * 0.15, y: -launchY * 0.15 });
+
+                    // Remove constraint to let projectile fly
+                    World.remove(world, slingConstraint);
+                    slingConstraint = null;
+
+                    shotsTaken++;
+
+                    // Schedule next ball creation after a delay
+                    setTimeout(() => {
+                        if (shotsTaken < maxShots && !gameOver) {
+                            createBall(120, height - 100 - 80);
+                        }
+                    }, 1500);
+                }
+            });
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function checkGameEnd() {
+            if (shotsTaken >= maxShots && currentBall && currentBall.speed < 0.5) {
+                if (!gameOver) {
+                    gameOver = true;
+                    document.getElementById('finalScore').textContent = score;
+                    document.getElementById('gameOverScreen').classList.add('show');
+                }
+            }
+        }
+
+        function render() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw ground
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(0, height - 20, width, 20);
+
+            // Draw slingshot
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(110, height - 100 - 80);
+            ctx.lineTo(120, height - 100);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(130, height - 100 - 80);
+            ctx.lineTo(120, height - 100);
+            ctx.stroke();
+
+            // Draw slingshot base
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(105, height - 100, 30, 80);
+
+            // Draw all bodies
+            const bodies = Composite.allBodies(world);
+            bodies.forEach(body => {
+                ctx.save();
+                ctx.translate(body.position.x, body.position.y);
+                ctx.rotate(body.angle);
+
+                if (body.label === 'projectile' || body.label === 'pig') {
+                    // Draw circle
+                    ctx.fillStyle = body.label === 'projectile' ? '#FFD700' : '#00AA00';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, body.circleRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Add shine
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(-5, -5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (body.vertices) {
+                    // Draw polygon (blocks)
+                    ctx.fillStyle = body.isStatic ? '#4CAF50' : '#FF8C42';
+                    ctx.beginPath();
+                    ctx.moveTo(body.vertices[0].x - body.position.x, body.vertices[0].y - body.position.y);
+                    for (let i = 1; i < body.vertices.length; i++) {
+                        ctx.lineTo(body.vertices[i].x - body.position.x, body.vertices[i].y - body.position.y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            });
+
+            // Draw drag line when dragging
+            if (isDragging && currentBall) {
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(dragStart.x, dragStart.y);
+                ctx.lineTo(currentBall.position.x, currentBall.position.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        function update() {
+            Engine.update(engine, 1000 / 60);
+
+            // Check for pig collisions
+            const bodies = Composite.allBodies(world);
+            bodies.forEach(body => {
+                if (body.label === 'pig' && body.position.y > height + 50) {
+                    World.remove(world, body);
+                    score += 100;
+                    targetsPigsHit++;
+                    targetsRemaining--;
+                    updateScoreDisplay();
+                }
+            });
+
+            checkGameEnd();
+        }
+
+        // Button handlers
+        document.getElementById('nextShotBtn').addEventListener('click', () => {
+            if (shotsTaken < maxShots && !gameOver && currentBall && currentBall.speed < 1) {
+                World.remove(world, currentBall);
+                if (slingConstraint) World.remove(world, slingConstraint);
+                createBall(120, height - 100 - 80);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            World.clear(world);
+            Engine.clear(engine);
+            document.getElementById('gameOverScreen').classList.remove('show');
+            initGame();
+        });
+
+        document.getElementById('playAgainBtn').addEventListener('click', () => {
+            World.clear(world);
+            Engine.clear(engine);
+            document.getElementById('gameOverScreen').classList.remove('show');
+            initGame();
+        });
+
+        // Game loop
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        initGame();
+        gameLoop();
+    </script>
+</body>
+</html>

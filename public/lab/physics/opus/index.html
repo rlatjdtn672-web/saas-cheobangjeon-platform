@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slingshot Physics — Angry Blocks</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #1a1c2c;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #f4f4f8;
+    overflow: hidden;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 12px;
+  }
+  #hud {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  #hud .title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffd93d;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+  }
+  .stats { display: flex; gap: 16px; align-items: center; }
+  .stat {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 6px 14px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .stat span { color: #ffd93d; }
+  #controls { display: flex; gap: 10px; }
+  button {
+    background: #ff595e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.08s ease, filter 0.15s ease;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.25); }
+  button.secondary { background: #4d96ff; }
+  #canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  }
+  canvas { display: block; width: 100%; }
+  #message {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26,28,44,0.92);
+    border: 2px solid #ffd93d;
+    border-radius: 16px;
+    padding: 22px 34px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffd93d;
+    display: none;
+    pointer-events: none;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  #message small { display: block; font-size: 15px; color: #f4f4f8; font-weight: 500; margin-top: 8px; }
+  #hint {
+    margin-top: 8px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="title">🎯 Slingshot Physics</div>
+    <div class="stats">
+      <div class="stat">Score: <span id="score">0</span></div>
+      <div class="stat">Shots: <span id="shots">0</span></div>
+      <div class="stat">Pigs: <span id="pigs">0</span></div>
+    </div>
+    <div id="controls">
+      <button id="reset" class="secondary">Next Shot</button>
+      <button id="restart">Restart Level</button>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <div id="message"></div>
+  </div>
+  <div id="hint">Drag the bird back from the slingshot and release to launch. Knock down all the pigs!</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+<script>
+(function () {
+  const {
+    Engine, Render, Runner, World, Bodies, Body,
+    Composite, Constraint, Mouse, MouseConstraint, Events, Vector
+  } = Matter;
+
+  const WIDTH = 1000;
+  const HEIGHT = 600;
+  const GROUND_Y = HEIGHT - 30;
+
+  // Slingshot anchor position
+  const SLING_X = 160;
+  const SLING_Y = HEIGHT - 200;
+  const BIRD_RADIUS = 18;
+
+  // --- Engine & world ---
+  const engine = Engine.create();
+  engine.world.gravity.y = 1.0;
+
+  const wrap = document.getElementById('canvas-wrap');
+  const render = Render.create({
+    element: wrap,
+    engine: engine,
+    options: {
+      width: WIDTH,
+      height: HEIGHT,
+      wireframes: false,
+      background: 'transparent',
+      pixelRatio: window.devicePixelRatio || 1
+    }
+  });
+  Render.run(render);
+  const runner = Runner.create();
+  Runner.run(runner, engine);
+
+  // --- Static environment ---
+  const wallOpts = { isStatic: true, render: { fillStyle: '#2a2d4a' } };
+  const ground = Bodies.rectangle(WIDTH / 2, GROUND_Y + 20, WIDTH + 200, 60, {
+    isStatic: true,
+    render: { fillStyle: '#3d5c3a' }
+  });
+  ground.label = 'ground';
+  const leftWall = Bodies.rectangle(-20, HEIGHT / 2, 40, HEIGHT * 2, wallOpts);
+  const rightWall = Bodies.rectangle(WIDTH + 20, HEIGHT / 2, 40, HEIGHT * 2, wallOpts);
+  const ceiling = Bodies.rectangle(WIDTH / 2, -300, WIDTH + 200, 40, wallOpts);
+  World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
+
+  // Draw a static "slingshot" base (visual pole)
+  const slingPole = Bodies.rectangle(SLING_X, SLING_Y + 90, 16, 180, {
+    isStatic: true,
+    collisionFilter: { group: -1, category: 0, mask: 0 }, // no collisions, purely decorative
+    render: { fillStyle: '#8b5a2b' }
+  });
+  World.add(engine.world, slingPole);
+
+  // --- State ---
+  let bird = null;
+  let sling = null;
+  let launched = false;
+  let firing = false;   // true after release until settle
+  let score = 0;
+  let shots = 0;
+  const pigs = [];
+  const blocks = [];
+  let gameWon = false;
+
+  const scoreEl = document.getElementById('score');
+  const shotsEl = document.getElementById('shots');
+  const pigsEl = document.getElementById('pigs');
+  const msgEl = document.getElementById('message');
+
+  function updateHUD() {
+    scoreEl.textContent = score;
+    shotsEl.textContent = shots;
+    pigsEl.textContent = pigs.filter(p => p.alive).length;
+  }
+
+  function showMessage(main, sub) {
+    msgEl.innerHTML = main + (sub ? '<small>' + sub + '</small>' : '');
+    msgEl.style.display = 'block';
+  }
+  function hideMessage() { msgEl.style.display = 'none'; }
+
+  // --- Bird / projectile ---
+  function makeBird() {
+    const b = Bodies.circle(SLING_X, SLING_Y, BIRD_RADIUS, {
+      density: 0.006,
+      restitution: 0.35,
+      friction: 0.6,
+      frictionAir: 0.0008,
+      render: {
+        fillStyle: '#ff595e',
+        strokeStyle: '#c1121f',
+        lineWidth: 2
+      }
+    });
+    b.label = 'bird';
+    return b;
+  }
+
+  function attachSling(b) {
+    sling = Constraint.create({
+      pointA: { x: SLING_X, y: SLING_Y },
+      bodyB: b,
+      length: 0,
+      stiffness: 0.05,
+      damping: 0.02,
+      render: { visible: true, strokeStyle: '#5a3a1a', lineWidth: 4 }
+    });
+    World.add(engine.world, sling);
+  }
+
+  function loadBird() {
+    if (bird) World.remove(engine.world, bird);
+    bird = makeBird();
+    World.add(engine.world, bird);
+    attachSling(bird);
+    launched = false;
+    firing = false;
+  }
+
+  // --- Level: tower of blocks + pigs ---
+  function buildLevel() {
+    // clear old
+    blocks.forEach(b => World.remove(engine.world, b));
+    pigs.forEach(p => World.remove(engine.world, p.body));
+    blocks.length = 0;
+    pigs.length = 0;
+    gameWon = false;
+
+    const woodOpts = {
+      density: 0.004,
+      friction: 0.7,
+      restitution: 0.1,
+      render: { fillStyle: '#c98a3b', strokeStyle: '#8a5a1e', lineWidth: 2 }
+    };
+
+    const baseX = 760;
+    const bw = 30;   // beam width
+    const bh = 110;  // beam height
+    const plankH = 24;
+    const y0 = GROUND_Y - 10;
+
+    // Two-tier structure using vertical beams and horizontal planks
+    function tier(cx, topY, span) {
+      const leftBeam = Bodies.rectangle(cx - span / 2, topY - bh / 2, bw, bh, { ...woodOpts, render: { ...woodOpts.render } });
+      const rightBeam = Bodies.rectangle(cx + span / 2, topY - bh / 2, bw, bh, { ...woodOpts, render: { ...woodOpts.render } });
+      const plank = Bodies.rectangle(cx, topY - bh - plankH / 2, span + bw, plankH, { ...woodOpts, render: { ...woodOpts.render } });
+      blocks.push(leftBeam, rightBeam, plank);
+      World.add(engine.world, [leftBeam, rightBeam, plank]);
+      return topY - bh - plankH; // new top
+    }
+
+    // Tier 1 (ground level)
+    let top = tier(baseX, y0, 130);
+    // Pig sitting inside tier 1
+    addPig(baseX, y0 - 40);
+    // Tier 2 on top
+    top = tier(baseX, top, 90);
+    // Pig on top of the whole structure
+    addPig(baseX, top - 30);
+
+    // A separate small stack + pig to the left of the tower
+    const stackX = 590;
+    const s1 = Bodies.rectangle(stackX, y0 - 25, 80, 50, { ...woodOpts, render: { ...woodOpts.render } });
+    const s2 = Bodies.rectangle(stackX, y0 - 25 - 50, 60, 50, { ...woodOpts, render: { ...woodOpts.render } });
+    blocks.push(s1, s2);
+    World.add(engine.world, [s1, s2]);
+    addPig(stackX, y0 - 25 - 50 - 30);
+  }
+
+  function addPig(x, y) {
+    const body = Bodies.circle(x, y, 22, {
+      density: 0.0015,
+      friction: 0.6,
+      restitution: 0.2,
+      render: {
+        fillStyle: '#6ab04c',
+        strokeStyle: '#3d7a26',
+        lineWidth: 3
+      }
+    });
+    body.label = 'pig';
+    const pig = { body, alive: true, restY: y, hitCount: 0 };
+    body.pigRef = pig;
+    pigs.push(pig);
+    World.add(engine.world, body);
+  }
+
+  // --- Pig destruction logic ---
+  function killPig(pig, points) {
+    if (!pig.alive) return;
+    pig.alive = false;
+    score += points;
+    // "pop" effect: shrink + fade to a puff, then remove
+    pig.body.render.fillStyle = '#ffd93d';
+    Body.scale(pig.body, 0.4, 0.4);
+    setTimeout(() => {
+      World.remove(engine.world, pig.body);
+    }, 120);
+    updateHUD();
+    checkWin();
+  }
+
+  function checkWin() {
+    if (gameWon) return;
+    if (pigs.every(p => !p.alive)) {
+      gameWon = true;
+      // bonus for remaining unused... just celebrate
+      setTimeout(() => {
+        showMessage('🎉 Level Cleared!', 'Final Score: ' + score + ' — click "Restart Level" to play again');
+      }, 300);
+    }
+  }
+
+  // Collision handling — pigs take damage from strong impacts
+  Events.on(engine, 'collisionStart', function (evt) {
+    for (const pair of evt.pairs) {
+      let pig = null, other = null;
+      if (pair.bodyA.label === 'pig') { pig = pair.bodyA.pigRef; other = pair.bodyB; }
+      else if (pair.bodyB.label === 'pig') { pig = pair.bodyB.pigRef; other = pair.bodyA; }
+      if (!pig || !pig.alive) continue;
+
+      // relative impact speed
+      const rv = Vector.magnitude(Vector.sub(pair.bodyA.velocity, pair.bodyB.velocity));
+
+      if (other.label === 'bird') {
+        // direct hit from bird — strong
+        if (rv > 4) { killPig(pig, 500); }
+        else { pig.hitCount += 2; }
+      } else if (other.label === 'ground') {
+        // fell to the ground hard
+        if (rv > 6) killPig(pig, 200);
+      } else {
+        // hit by a block / other body
+        if (rv > 7) killPig(pig, 300);
+        else if (rv > 3) {
+          pig.hitCount += 1;
+          if (pig.hitCount >= 4) killPig(pig, 150);
+        }
+      }
+    }
+  });
+
+  // --- Mouse / slingshot control ---
+  const mouse = Mouse.create(render.canvas);
+  const mouseConstraint = MouseConstraint.create(engine, {
+    mouse: mouse,
+    constraint: {
+      stiffness: 0.2,
+      render: { visible: false }
+    }
+  });
+  World.add(engine.world, mouseConstraint);
+  render.mouse = mouse;
+
+  const MAX_DRAG = 130;
+
+  // Constrain dragging so the bird can only be pulled within slingshot range,
+  // and only allow grabbing the current (un-launched) bird.
+  Events.on(mouseConstraint, 'startdrag', function (e) {
+    if (e.body !== bird || launched) {
+      // prevent dragging anything else
+      mouseConstraint.constraint.bodyB = null;
+    }
+  });
+
+  Events.on(engine, 'beforeUpdate', function () {
+    // While holding the bird, clamp its distance from the anchor.
+    if (bird && !launched && mouseConstraint.body === bird) {
+      const anchor = { x: SLING_X, y: SLING_Y };
+      const d = Vector.sub(bird.position, anchor);
+      const dist = Vector.magnitude(d);
+      if (dist > MAX_DRAG) {
+        const clamped = Vector.add(anchor, Vector.mult(Vector.normalise(d), MAX_DRAG));
+        Body.setPosition(bird, clamped);
+      }
+      // don't let the player pull forward (right of anchor) too far / launch weirdly
+    }
+  });
+
+  Events.on(mouseConstraint, 'enddrag', function (e) {
+    if (e.body === bird && !launched && sling) {
+      // Release: the sling constraint snaps the bird forward.
+      launched = true;
+      firing = true;
+      shots++;
+      updateHUD();
+      // Remove the elastic after a short delay so it pulls then lets go.
+      setTimeout(() => {
+        if (sling) {
+          World.remove(engine.world, sling);
+          sling = null;
+        }
+      }, 90);
+    }
+  });
+
+  // Auto-detect settle: if the bird has come to rest or gone off-screen after firing,
+  // let the player load the next shot (but don't force it).
+  let settleTimer = 0;
+  Events.on(engine, 'afterUpdate', function () {
+    if (firing && bird) {
+      const speed = Vector.magnitude(bird.velocity);
+      const offscreen = bird.position.x > WIDTH + 60 || bird.position.y > HEIGHT + 200 || bird.position.x < -60;
+      if (speed < 0.4 || offscreen) {
+        settleTimer++;
+      } else {
+        settleTimer = 0;
+      }
+      if (settleTimer > 55 && !gameWon) {
+        firing = false;
+        settleTimer = 0;
+        // gentle prompt
+      }
+    }
+  });
+
+  // Draw slingshot fork + a trajectory-band front arm on the overlay.
+  Events.on(render, 'afterRender', function () {
+    const ctx = render.context;
+    // Front arm of the sling (draws band from front fork to bird while pulling)
+    if (bird && !launched) {
+      const frontFork = { x: SLING_X + 4, y: SLING_Y - 6 };
+      ctx.beginPath();
+      ctx.moveTo(frontFork.x, frontFork.y);
+      ctx.lineTo(bird.position.x, bird.position.y);
+      ctx.strokeStyle = '#7a4a1a';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+    // Fork tips
+    ctx.fillStyle = '#8b5a2b';
+    ctx.beginPath(); ctx.arc(SLING_X, SLING_Y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(SLING_X + 4, SLING_Y - 6, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Draw simple eyes on the bird and pigs for character
+    if (bird) drawEyes(ctx, bird, BIRD_RADIUS);
+    pigs.forEach(p => { if (p.alive) drawEyes(ctx, p.body, 22); });
+  });
+
+  function drawEyes(ctx, body, r) {
+    const { x, y } = body.position;
+    const a = body.angle;
+    const off = r * 0.4;
+    const ex1 = x + Math.cos(a) * off - Math.sin(a) * (-r * 0.25);
+    const ey1 = y + Math.sin(a) * off + Math.cos(a) * (-r * 0.25);
+    const ex2 = x + Math.cos(a) * (-off * 0.1) - Math.sin(a) * (-r * 0.35);
+    const ey2 = y + Math.sin(a) * (-off * 0.1) + Math.cos(a) * (-r * 0.35);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(ex1, ey1, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex2, ey2, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(ex1, ey1, r * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex2, ey2, r * 0.1, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // --- Buttons ---
+  document.getElementById('reset').addEventListener('click', function () {
+    if (gameWon) return;
+    // Remove any lingering sling and reload bird at the slingshot.
+    if (sling) { World.remove(engine.world, sling); sling = null; }
+    hideMessage();
+    loadBird();
+  });
+
+  document.getElementById('restart').addEventListener('click', function () {
+    score = 0;
+    shots = 0;
+    hideMessage();
+    if (sling) { World.remove(engine.world, sling); sling = null; }
+    buildLevel();
+    loadBird();
+    updateHUD();
+  });
+
+  // --- Init ---
+  buildLevel();
+  loadBird();
+  updateHUD();
+
+  // Keep the canvas crisp / responsive to container width via CSS scaling.
+  Render.lookAt(render, { min: { x: 0, y: 0 }, max: { x: WIDTH, y: HEIGHT } });
+})();
+</script>
+</body>
+</html>
