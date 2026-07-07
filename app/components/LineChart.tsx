@@ -14,12 +14,18 @@ export default function LineChart({
   height = 200,
   tickFmt,
   baseline = "zero",
+  yFmt,
+  yTicks = 3,
+  xMaxTicks = 6,
 }: {
   days: string[];
   series: Series[];
   height?: number;
   tickFmt?: (label: string) => string;
   baseline?: "zero" | "min";
+  yFmt?: (v: number) => string; // y축 눈금 포맷 (소수 등). 없으면 정수 반올림
+  yTicks?: number; // y축 눈금 개수 (기본 3)
+  xMaxTicks?: number; // x축 라벨 최대 개수 (기본 6)
 }) {
   const W = 680,
     Hh = height,
@@ -161,21 +167,22 @@ export default function LineChart({
           </g>
         ))}
         {/* 가로 그리드 */}
-        {[0, 0.5, 1].map((f, i) => {
-          const v = Math.round(lo + (hi - lo) * f);
-          const y = yOf(v);
+        {Array.from({ length: Math.max(2, yTicks) }, (_, i) => i / (Math.max(2, yTicks) - 1)).map((f, i) => {
+          const raw = lo + (hi - lo) * f;
+          const v = yFmt ? raw : Math.round(raw);
+          const y = yOf(typeof v === "number" ? v : raw);
           return (
             <g key={i}>
               <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke="#1f2630" />
               <text x={pad.l - 6} y={y + 3} fill="#5b6573" fontSize="10" textAnchor="end">
-                {v}
+                {yFmt ? yFmt(raw) : v}
               </text>
             </g>
           );
         })}
         {/* x 라벨 */}
         {vDays.map((d, i) => {
-          if (n > 8 && i % Math.ceil(n / 6) !== 0 && i !== n - 1) return null;
+          if (n > xMaxTicks && i % Math.ceil(n / xMaxTicks) !== 0 && i !== n - 1) return null;
           return (
             <text key={i} x={xOf(i)} y={Hh - 6} fill="#5b6573" fontSize="10" textAnchor="middle">
               {fmt(d)}
@@ -234,7 +241,7 @@ export default function LineChart({
           {vSeries.map((s) => (
             <div key={s.label} style={{ color: "#e6edf3", display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: "inline-block" }} />
-              {s.label}: <b>{s.points[hover]?.y ?? 0}</b>
+              {s.label}: <b>{yFmt ? yFmt(s.points[hover]?.y ?? 0) : s.points[hover]?.y ?? 0}</b>
             </div>
           ))}
         </div>

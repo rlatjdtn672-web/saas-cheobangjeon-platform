@@ -13,6 +13,7 @@ import SiteHeader from "@/app/components/SiteHeader";
 import LabView from "@/app/components/LabView";
 import { LAB_TASKS } from "@/data/lab";
 import { PHYSICS_TASKS } from "@/data/physics";
+import BenchView from "@/app/components/BenchView";
 
 import type { Saas, SaasButton, ButtonKind } from "@/lib/types";
 
@@ -67,6 +68,18 @@ export default async function SaasDetail({ params }: { params: { slug: string } 
         <SiteHeader />
         <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
         <LabView tasks={LAB_TASKS} />
+      </main>
+    );
+  }
+
+  // API 레이턴시 벤치마크(6호) — Anthropic 직통 vs Bedrock 시계열
+  if (params.slug === "api-bench") {
+    return (
+      <main className="relative">
+        <PageViewTracker type="saas_view" saasId="api-bench" />
+        <SiteHeader />
+        <div className="glow pointer-events-none absolute inset-x-0 top-0 h-[320px]" />
+        <BenchView />
       </main>
     );
   }

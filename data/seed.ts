@@ -20,6 +20,25 @@ export const NEWSLETTER = {
 
 export const SEED_SAAS: Saas[] = [
   {
+    id: "api-bench",
+    slug: "api-bench",
+    name: "Claude API 레이턴시 벤치마크",
+    tagline:
+      "같은 Claude라도 어디로 호출하느냐에 따라 속도가 다르다. 한국에서 Anthropic 직통 vs AWS Bedrock(미국·도쿄)을 매시간 측정 — Haiku·Sonnet·Opus의 TTFT와 생성속도를 시계열로 비교.",
+    description:
+      "Anthropic 직통 vs Bedrock 엔드포인트별 TTFT·생성속도 벤치마크. 매시간 자동 측정한 데이터를 시계열 차트로 시각화.",
+    category: "AI / 벤치마크",
+    pricing: "오픈",
+    websiteUrl: "https://seungsu.com/s/api-bench",
+    links: [],
+    reviewTitle: "Claude API 레이턴시 벤치마크 — 직통 vs Bedrock",
+    reviewUrl:
+      "https://www.linkedin.com/newsletters/실전-saas-처방전-7463394467773984768/",
+    publishedAt: "2026-07-07",
+    issueNo: "6호",
+    featured: true,
+  },
+  {
     id: "physics-lab",
     slug: "physics-lab",
     name: "물리 게임 실험실",
