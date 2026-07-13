@@ -65,7 +65,7 @@ export default async function Image() {
             <span style={{ color: "#5b8cff", marginLeft: 22 }}>가르칩니다</span>
           </div>
           <div style={{ marginTop: 22, fontSize: 30, color: "#aeb7c2" }}>
-            블로그 · 리아영어 · SaaS 리뷰
+            블로그 · SaaS 리뷰 · AI 실험실
           </div>
         </div>
 

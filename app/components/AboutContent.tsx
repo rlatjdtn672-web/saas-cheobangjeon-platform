@@ -75,7 +75,7 @@ const DATA: Record<
       "LinkedIn 콘텐츠 크리에이터 · 팔로워 5,000+, 최고 게시글 9만 뷰",
     ],
     entre: {
-      title: "리아영어 · 영어 학원 직접 운영",
+      title: "영어 학원 직접 운영",
       period: "2024 – 현재",
       body: "",
     },
@@ -141,7 +141,7 @@ const DATA: Record<
       "LinkedIn Content Creator · 5,000+ followers; top post 90K views",
     ],
     entre: {
-      title: "Lia English · Founder & Operator (English Academy)",
+      title: "Founder & Operator (English Academy)",
       period: "2024 – Present",
       body: "",
     },
@@ -174,11 +174,7 @@ export default function AboutContent() {
         <Link href="/blog" className={aLink}>
           블로그
         </Link>
-        에도 글을 씁니다. 영어 학원{" "}
-        <Link href="/english" className={aLink}>
-          리아영어
-        </Link>
-        를 직접 운영하고, SaaS 100개를 결제해보며{" "}
+        에도 글을 씁니다. 영어 학원을 직접 운영하고, SaaS 100개를 결제해보며{" "}
         <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className={aLink}>
           격주 뉴스레터
         </a>
@@ -195,11 +191,7 @@ export default function AboutContent() {
         <Link href="/blog" className={aLink}>
           blog
         </Link>
-        , founded and run an English academy{" "}
-        <Link href="/english" className={aLink}>
-          (Lia English)
-        </Link>
-        , and review 100+ SaaS tools I&apos;ve paid for in a{" "}
+        , founded and run an English academy, and review 100+ SaaS tools I&apos;ve paid for in a{" "}
         <a href={NEWSLETTER.newsletterUrl} target="_blank" rel="noopener noreferrer" className={aLink}>
           biweekly newsletter
         </a>
@@ -209,21 +201,15 @@ export default function AboutContent() {
   const entreBody =
     lang === "ko" ? (
       <>
-        엔지니어이면서 직접 교육 비즈니스{" "}
-        <Link href="/english" className={aLink}>
-          리아영어
-        </Link>
-        를 창업해 운영했습니다. 고객을 모으고·마케팅하고·운영을 최적화하는 전 과정을 책임지며 0에서
+        엔지니어이면서 직접 교육 비즈니스(영어 학원)를 창업해 운영했습니다. 고객을
+        모으고·마케팅하고·운영을 최적화하는 전 과정을 책임지며 0에서
         정원(40명)까지 키웠어요. 이 경험에서 &apos;오프라인 사업자의 고객 획득&apos;이라는 문제를 깊이
         이해했고, 지금은 그걸 데이터·AI로 자동화하는 걸 만들고 있습니다.
       </>
     ) : (
       <>
-        As an engineer, I also founded and ran an education business,{" "}
-        <Link href="/english" className={aLink}>
-          Lia English
-        </Link>
-        — owning the full cycle of customer acquisition, marketing, and operations, and growing it
+        As an engineer, I also founded and ran an education business (an English academy) — owning
+        the full cycle of customer acquisition, marketing, and operations, and growing it
         from zero to full capacity (40 students). That taught me the real problem of customer
         acquisition for offline businesses, and I&apos;m now building ways to automate it with data
         &amp; AI.

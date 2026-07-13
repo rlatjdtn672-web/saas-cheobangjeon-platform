@@ -5,7 +5,7 @@ export const SITE_URL = "https://seungsu.com";
 export const SITE_NAME = "seungsu.com";
 export const SITE_TITLE = "김성수 (Sungsu Kim) — AI 인프라 엔지니어";
 export const SITE_TAGLINE =
-  "삼성전자 AI 인프라 엔지니어 김성수. AI·인프라 블로그, 리아영어, SaaS 리뷰를 한곳에.";
+  "삼성전자 AI 인프라 엔지니어 김성수. AI·인프라 블로그와 SaaS 리뷰를 한곳에.";
 // 상세 페이지 제목 접미사
 export const TITLE_SUFFIX = "seungsu.com";
 

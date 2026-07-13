@@ -33,10 +33,9 @@ function SectionHead({ title, href }: { title: string; href: string }) {
 }
 
 export default async function HomePage() {
-  const [saasList, mainPosts, liaPosts] = await Promise.all([
+  const [saasList, mainPosts] = await Promise.all([
     getStore().listSaas(),
     listPublishedPosts("main"),
-    listPublishedPosts("lia"),
   ]);
 
   return (
@@ -55,17 +54,6 @@ export default async function HomePage() {
             <div className="space-y-2.5">
               {mainPosts.slice(0, 3).map((p) => (
                 <PostRow key={p.id} href={`/blog/${p.slug}`} title={p.title} date={p.created_at} excerpt={p.excerpt} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {liaPosts.length > 0 && (
-          <section className="mt-12">
-            <SectionHead title="🟢 리아영어" href="/english" />
-            <div className="space-y-2.5">
-              {liaPosts.slice(0, 3).map((p) => (
-                <PostRow key={p.id} href={`/english/${p.slug}`} title={p.title} date={p.created_at} excerpt={p.excerpt} />
               ))}
             </div>
           </section>

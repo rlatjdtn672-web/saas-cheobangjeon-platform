@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description: SITE_TAGLINE,
-  keywords: ["김성수", "Sungsu Kim", "AI 인프라", "LLMOps", "리아영어", "영어학원", "블로그", "SaaS 리뷰"],
+  keywords: ["김성수", "Sungsu Kim", "AI 인프라", "LLMOps", "블로그", "SaaS 리뷰"],
   alternates: { canonical: "/" },
   openGraph: {
     title: SITE_TITLE,
